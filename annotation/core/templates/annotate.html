@@ -1,0 +1,619 @@
+<!--
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+─████████████████───██████████████─██████████████─████████████──────██████████████─██████──██████─██████████─██████████████─
+─██░░░░░░░░░░░░██───██░░░░░░░░░░██─██░░░░░░░░░░██─██░░░░░░░░████────██░░░░░░░░░░██─██░░██──██░░██─██░░░░░░██─██░░░░░░░░░░██─
+─██░░████████░░██───██░░██████████─██░░██████░░██─██░░████░░░░██────██████░░██████─██░░██──██░░██─████░░████─██░░██████████─
+─██░░██────██░░██───██░░██─────────██░░██──██░░██─██░░██──██░░██────────██░░██─────██░░██──██░░██───██░░██───██░░██─────────
+─██░░████████░░██───██░░██████████─██░░██████░░██─██░░██──██░░██────────██░░██─────██░░██████░░██───██░░██───██░░██████████─
+─██░░░░░░░░░░░░██───██░░░░░░░░░░██─██░░░░░░░░░░██─██░░██──██░░██────────██░░██─────██░░░░░░░░░░██───██░░██───██░░░░░░░░░░██─
+─██░░██████░░████───██░░██████████─██░░██████░░██─██░░██──██░░██────────██░░██─────██░░██████░░██───██░░██───██████████░░██─
+─██░░██──██░░██─────██░░██─────────██░░██──██░░██─██░░██──██░░██────────██░░██─────██░░██──██░░██───██░░██───────────██░░██─
+─██░░██──██░░██████─██░░██████████─██░░██──██░░██─██░░████░░░░██────────██░░██─────██░░██──██░░██─████░░████─██████████░░██─
+─██░░██──██░░░░░░██─██░░░░░░░░░░██─██░░██──██░░██─██░░░░░░░░████────────██░░██─────██░░██──██░░██─██░░░░░░██─██░░░░░░░░░░██─
+─██████──██████████─██████████████─██████──██████─████████████──────────██████─────██████──██████─██████████─██████████████─
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+This project is for research purposes *only*. Exploiting vulnerabilities in this
+codebase does nothing but lose us time that we would prefer to spend doing actual
+research. So, please, be nice to the codebase.
+
+Thank you,
+--The RoFT Team (Liam, Daphne, Arun, Sherry)
+-->
+{% extends 'base.html' %}
+
+{% block content %}
+<script>
+  const all_sentences = {{ sentences|safe }};
+  const boundary = {{boundary}};
+  const max_sentences = {{max_sentences}};
+  const text_id = "{{ text_id }}";
+  const attention_check = {{attention_check}};
+  const name = "{{ name }}";
+  const playlist = "{{ playlist }}";
+
+  // stores list of UNIX timestamps on button presses
+  let timestamps = [Date.now()];
+  let current_sentence = 1;
+
+  function update_params_in_url() {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("qid")) {
+      params.set("qid", text_id);
+    }
+    if (!params.has("playlist")) {
+      params.set("playlist", playlist);
+    }
+    var url = new URL(window.location.href);
+    url.search = params
+    url = url.toString()
+    window.history.replaceState({url: url}, null, url);
+  }
+
+  // helper function for adding new sentences
+  function redraw_sentences(current_sentence) {
+    const sentences = all_sentences.slice(0, current_sentence);
+    let cards_html = "";
+
+    for (let i = 0; i < sentences.length; i++) {
+      const card = '<div class="card" id="' + i.toString() + '" style="margin-bottom: 0.5rem"> <div class="card-body"> ' + sentences[i] +  '</div> </div> ';
+      cards_html += card;
+    }
+
+    $("#cards").html(cards_html);
+    $("#remaining").html((max_sentences - current_sentence).toString() + " steps remaining")
+  }
+
+  // helper function for adding highlights and emojis
+  function reveal_solutions() {
+    let cards_html = "";
+
+    const human_image = '👩🏽‍💻';
+    const robot_image = '🤖';
+    for (let i = 0; i < all_sentences.length; i++) {
+      const emoji = ((i < boundary) ? human_image : robot_image);
+      const card = (
+          '<div class="card" style="margin-bottom: 0.5rem" id="' +
+          i.toString() +
+          '" style=""> <div class="card-body" style="padding: 0.5em">' +
+          '<table><tr><td><h1 style="margin-right: 1rem">' +
+          emoji +
+          "</h1></td><td>" +
+          all_sentences[i] +
+          '</td></tr></table></div> </div> ');
+      cards_html += card;
+    }
+
+    $("#cards").html(cards_html);
+    $("#remaining").html("All sentences displayed.");
+
+    const current_sentence_index = current_sentence - 1
+    $('#' + current_sentence_index.toString()).addClass('bg-info');
+    $('#' + current_sentence_index.toString()).css('color', 'white');
+
+    if (boundary > current_sentence_index) {
+      $("#result-text").html("Good try! You guessed machine-generated but that sentence was still human-written.")
+    } else if (boundary == current_sentence_index) {
+      $("#result-text").html("Nice job! You guessed correctly.")
+    } else {
+      $("#result-text").html(`Good try! The machine-generated sentences have been revealed. Your guess was ${current_sentence_index - boundary} sentence(s) away from the true boundary.`)
+    }
+
+    $("#analysis").hide();
+    $("#reveal").show();
+
+    const marker = document.querySelector("#marker-after");
+    marker.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function show_points(points) {
+    if (points == 0) {
+          $("#remaining").notify('You received 0 points. Try again!', "success");
+    }
+    if (points > 0) {
+      $("#remaining").notify(`You earned ${points} points!`, "success");
+    }
+  }
+
+  function submit_annotation(e) {
+    e.preventDefault();
+
+    // get checkbox values and reset
+    const grammar = $('#grammar').is(":checked");
+    const repetition = $('#repetition').is(":checked");
+    const irrelevant = $('#irrelevant').is(":checked");
+    const contradicts_sentence = $('#contradicts_sentence').is(":checked");
+    const contradicts_knowledge = $('#contradicts_knowledge').is(":checked");
+    const common_sense = $('#common_sense').is(":checked");
+    const coreference = $('#coreference').is(":checked");
+    const generic = $('#generic').is(":checked");
+    const other_reason = $("#other_reason").val();
+
+    $("#note").val('');
+    $('input[type=checkbox]').each(function() {
+      this.checked = false;
+    });
+
+    const max_points = 5;
+    let points = 0;
+
+    const current_sentence_index = current_sentence - 1;
+    if (attention_check) {
+      points = 0;
+    } else if (current_sentence_index == boundary) {
+      points = max_points;
+    } else if (current_sentence_index > boundary) {
+      points = Math.max(max_points - Math.abs(boundary - current_sentence_index), 0);
+    }
+
+    // make ajax request to log annotation
+    console.log('Making ajax call with boundary = ' + current_sentence_index);
+    const url = '{% url "save" %}';
+    $.ajax({
+      type: 'POST',
+      url: url,
+      data: {
+        "boundary": current_sentence_index,
+        "text": text_id,
+        "name": name,
+        "grammar": grammar,
+        "repetition": repetition,
+        "irrelevant": irrelevant,
+        "contradicts_sentence": contradicts_sentence,
+        "contradicts_knowledge": contradicts_knowledge,
+        "common_sense": common_sense,
+        "coreference": coreference,
+        "generic": generic,
+        "other_reason": other_reason,
+        "points": points,
+        "attention_check": attention_check
+      },
+      success: function (response) {
+        reveal_solutions();
+        show_points(points);
+      },
+      error: function (error) {
+        console.log(error);
+      }
+    });
+  }
+
+  function load_next_annotation() {
+    let searchParams = new URLSearchParams(window.location.search)
+
+    if (searchParams.has('playlist')) {
+      window.location.replace(`/annotate?playlist=${searchParams.get('playlist')}`);
+    } else {
+      window.location.replace('/annotate');
+    }
+  }
+
+  // user interaction logic
+  $(document).ready(function() {
+    update_params_in_url();
+
+    // query param logic through django templating
+    {% if annotation >= 0 %}
+      current_sentence = {{ annotation }} + 1;
+      reveal_solutions()
+      $("#another").show();
+      $("#reveal").hide();
+      $("#select-text").html("You've already annotated this one.")
+    {% else %}
+      $("#machine").show();
+      $("#next").show();
+      $("#selection").show();
+      redraw_sentences(current_sentence);
+    {% endif %}
+
+    function submit_annotation_all_human(e) {
+      e.preventDefault();
+
+      // get checkbox values and reset
+      const grammar = $('#grammar').is(":checked");
+      const repetition = $('#repetition').is(":checked");
+      const irrelevant = $('#irrelevant').is(":checked");
+      const contradicts_sentence = $('#contradicts_sentence').is(":checked");
+      const contradicts_knowledge = $('#contradicts_knowledge').is(":checked");
+      const common_sense = $('#common_sense').is(":checked");
+      const coreference = $('#coreference').is(":checked");
+      const generic = $('#generic').is(":checked");
+      const other_reason = $("#other_reason").val();
+
+      $("#note").val('');
+      $('input[type=checkbox]').each(function() {
+        this.checked = false;
+      });
+
+      const max_points = 5;
+      let points = 0;
+
+      const current_sentence_index = current_sentence - 1;
+      if (attention_check) {
+        points = 0;
+      } else if (current_sentence_index == boundary) {
+        points = max_points;
+      } else if (current_sentence_index > boundary) {
+        points = Math.max(max_points - Math.abs(boundary - current_sentence_index), 0);
+      }
+
+      // make ajax request to log annotation
+      console.log('Making ajax call with boundary = ' + current_sentence_index);
+      const url = '{% url "save" %}';
+      $.ajax({
+        type: 'POST',
+        url: url,
+        data: {
+          "boundary": current_sentence_index,
+          "text": text_id,
+          "name": name,
+          "playlist_id": playlist,
+          "grammar": grammar,
+          "repetition": repetition,
+          "irrelevant": irrelevant,
+          "contradicts_sentence": contradicts_sentence,
+          "contradicts_knowledge": contradicts_knowledge,
+          "common_sense": common_sense,
+          "coreference": coreference,
+          "generic": generic,
+          "other_reason": other_reason,
+          "points": points,
+          "attention_check": attention_check,
+          "timestamps": timestamps.join(',')
+        },
+        success: function (response) {
+          reveal_solutions();
+          show_points(points);
+        },
+        error: function (error) {
+          console.log(error);
+        }
+      });
+    }
+
+    function submit_annotation(e) {
+      e.preventDefault();
+
+      // get checkbox values and reset
+      const grammar = $('#grammar').is(":checked");
+      const repetition = $('#repetition').is(":checked");
+      const irrelevant = $('#irrelevant').is(":checked");
+      const contradicts_sentence = $('#contradicts_sentence').is(":checked");
+      const contradicts_knowledge = $('#contradicts_knowledge').is(":checked");
+      const common_sense = $('#common_sense').is(":checked");
+      const coreference = $('#coreference').is(":checked");
+      const generic = $('#generic').is(":checked");
+      const other_reason = $("#other_reason").val();
+
+      const any = grammar || repetition || irrelevant || contradicts_sentence ||
+                  contradicts_knowledge || common_sense || coreference ||
+                  generic || Boolean(other_reason);
+
+      $("#note").val('');
+      $('input[type=checkbox]').each(function() {
+        this.checked = false;
+      });
+
+      const max_points = 5;
+      let points = 0;
+
+      const current_sentence_index = current_sentence - 1;
+      if (attention_check) {
+        points = 0;
+      } else if (current_sentence_index == boundary) {
+        points = max_points;
+      } else if (current_sentence_index > boundary) {
+        points = Math.max(max_points - Math.abs(boundary - current_sentence_index), 0);
+      }
+
+      // make ajax request to log annotation
+      if (any) {
+        console.log('Making ajax call with boundary = ' + current_sentence_index);
+        const url = '{% url "save" %}';
+        $.ajax({
+          type: 'POST',
+          url: url,
+          data: {
+            "boundary": current_sentence_index,
+            "text": text_id,
+            "name": name,
+            "playlist_id": playlist,
+            "grammar": grammar,
+            "repetition": repetition,
+            "irrelevant": irrelevant,
+            "contradicts_sentence": contradicts_sentence,
+            "contradicts_knowledge": contradicts_knowledge,
+            "common_sense": common_sense,
+            "coreference": coreference,
+            "generic": generic,
+            "other_reason": other_reason,
+            "points": points,
+            "attention_check": attention_check,
+            "timestamps": timestamps.join(',')
+          },
+          success: function (response) {
+            reveal_solutions();
+            show_points(points);
+          },
+          error: function (error) {
+            console.log(error);
+          }
+        });
+      } else {
+        $("#no-selection").show();
+      }
+    }
+
+    // adding new sentence
+    $("#next").click(function() {
+      current_sentence += 1;
+
+      if (current_sentence <= max_sentences) {
+        redraw_sentences(current_sentence);
+
+        if (current_sentence == max_sentences) {
+          $("#next").hide();
+          $("#human").show();
+          $("#global").show();
+        }
+      }
+
+      timestamps.push(Date.now());
+    });
+
+    $("#machine").click(function() {
+      $("#selection").hide();
+      $("#analysis").show();
+      $("#revision").show();
+
+      timestamps.push(Date.now());
+    });
+
+    $("#go_back").click(function() {
+      $("#selection").show();
+      $("#analysis").hide();
+      $("#revision").hide();
+    });
+
+    $("#human").click(function(e) {
+      current_sentence = max_sentences + 1;
+      $("#revision-form").hide();
+      $("#selection").hide();
+      $("#analysis").show();
+      submit_annotation_all_human(e);
+    });
+
+    $("#global").click(function(e) {
+      current_sentence = max_sentences + 1;
+      $("#selection").hide();
+      $("#analysis").show();
+      $("#revision").show();
+    });
+
+    $("#continue").click(function() {
+      load_next_annotation()
+    })
+
+    $("#another").click(function() {
+      load_next_annotation()
+    })
+
+    // processing annotator decision
+    $("#revision-form").submit(submit_annotation);
+  });
+</script>
+
+<div class="row">
+  <div class="col-md">
+  <div class="col-md" style="padding: 2rem">
+    <h2 class="text-muted"> <strong>Is the reasoning chain correct?</strong> </h2>
+    <p class="text-muted" style="margin-bottom: 1rem;">
+      You'll see a math question and a model-generated reasoning chain, one step at a time. Your task is to decide at which step (if at all) the reasoning becomes incorrect. Please click the blue button <strong> as soon as</strong> you spot an incorrect step.
+
+      <!--The boundaries are not uniformly or normally distributed, so treat every single instance in isolation.-->
+    </p>
+
+    <br />
+    <small class="text-muted">Question:</small>
+
+    <p class="alert alert-info">
+    {% autoescape off %}
+      {{prompt}}
+    {% endautoescape  %}
+    </p>
+
+    <small class="text-muted">Model-generated Reasoning Chain:</small>
+
+    <div style="margin-top: 0.5rem" id="cards"></div>
+
+    <small id="remaining" class="text-muted"></small>
+    <br /> <br />
+    <div class="card" style="margin-bottom: 2rem">
+      <div class="card-body" id="selection">
+        <p id="select-text" class="text-muted">Select an option:</p>
+        <button id="next" type="button" class="btn btn-secondary" style="display: none">
+          It's all correct so far.</button>
+        <button type="button" id="human" type="button" class="btn btn-primary" style="display: none; color: white">
+          The entire reasoning chain is correct.
+        </button>
+        <button type="button" id="machine" type="button" class="btn btn-info" style="display: none; color: white">
+          This step is incorrect.
+        </button>
+        <button type="button" id="global" type="button" class="btn btn-info" style="display: none; color: white">
+          There is a global issue about the reasoning chain.
+        </button>
+        <a class="btn btn-primary" id="another" style="display: none; color: white">Annotate another.</a>
+      </div>
+
+      <div class="card-body" id="analysis" style="display: none">
+        <p class="text-info">
+          Why do you think this step is incorrect? Select all the error categories that apply.
+        </p>
+        <form id="revision-form">
+          <div>
+
+            <div class="text-dark">Information Errors: The step... </div>
+            {% for reason in information_reasons %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
+                <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
+                  {{reason.description}}
+                </label>
+              </div>
+            {% endfor %}
+
+            <div class="text-dark">Logic Errors: The step... </div>
+            {% for reason in logic_reasons %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
+                <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
+                  {{reason.description}}
+                </label>
+              </div>
+            {% endfor %}
+
+            <div class="text-dark">Other </div>
+            {% for reason in other_reasons %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
+                <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
+                  {{reason.description}}
+                </label>
+              </div>
+            {% endfor %}
+
+          </div>
+
+        <br>
+        <p class="text-info">
+          Please explain more specifically what's wrong, and suggest a fix in Natural Language.
+        </p>
+        <div>
+          <input type="text" id="critique" name="critique" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your critique" />
+        </div>
+
+
+        <p class="text-info">
+          Please rewrite this step to be correct.
+        </p>
+        <div>
+          <input type="text" id="edit" name="edit" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your edit" />
+        </div>
+
+          <p class="text-danger" id="no-selection" style="display: none">
+            Please select at least one error type.
+          </p>
+          <button type="button" id="go_back" class="btn btn-secondary"> Go Back </button>
+          <button type="submit" class="btn btn-info"> Reveal </button>
+        </form>
+      </div>
+
+      <div class="card-body" id="reveal" style="display: none">
+        <p class="text-muted" id="result-text"> </p>
+        <a class="btn btn-primary" style="color: white" id="continue">Continue</a>
+        <button class="btn btn-secondary" type="button" data-toggle="modal" data-target="#helpModal">
+          Need some help?
+        </button>
+      </div>
+    </div>
+    <div id="marker-after" />
+  </div>
+  <div class="col-md" />
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="helpModalLabel">Common Problems in Generated Text</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="table">
+          <tr>
+          <th>Problem</th>
+          <th>Example</th>
+          </tr>
+          <tr>
+            <td>Repetition</td>
+            <td>-<code>The cat slept on the window and on the window and on the window.</code><br/>-<code>To make a good cup of tea, you first have to make a good cup of tea.</code></td>
+          </tr>
+          <tr>
+            <td>Common-sense errors</td>
+            <td>-<code>The unicorn had four horns.</code><br/>-<code>Shortly after sunset, the sun was bright in the sky.</code></td>
+          </tr>
+          <tr>
+            <td>Factual errors</td>
+            <td><code>The president of the United States is Clark Kent.</code></td>
+          </tr>
+          <tr>
+            <td>Incoherency and topic drift</td>
+            <td>Consecutive sentences rapidly switch between topics so that there is little or no logical progression between ideas.</td>
+          </tr>
+        <table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" style="margin:auto;display:block" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script>
+    $(function() {
+      // This function gets cookie with a given name
+      function getCookie(name) {
+          var cookieValue = null;
+          if (document.cookie && document.cookie != '') {
+              var cookies = document.cookie.split(';');
+              for (var i = 0; i < cookies.length; i++) {
+                  var cookie = jQuery.trim(cookies[i]);
+                  // Does this cookie string begin with the name we want?
+                  if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+      var csrftoken = getCookie('csrftoken');
+
+      /*
+      The functions below will create a header with csrftoken
+      */
+
+      function csrfSafeMethod(method) {
+          // these HTTP methods do not require CSRF protection
+          return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+      }
+      function sameOrigin(url) {
+          // test that a given url is a same-origin URL
+          // url could be relative or scheme relative or absolute
+          var host = document.location.host; // host + port
+          var protocol = document.location.protocol;
+          var sr_origin = '//' + host;
+          var origin = protocol + sr_origin;
+          // Allow absolute or scheme relative URLs to same origin
+          return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+              (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+              // or any other URL that isn't scheme relative or absolute i.e relative.
+              !(/^(\/\/|http:|https:).*/.test(url));
+      }
+
+      $.ajaxSetup({
+          beforeSend: function(xhr, settings) {
+              if (!csrfSafeMethod(settings.type) && sameOrigin(settings.url)) {
+                  // Send the token to same-origin, relative URLs only.
+                  // Send the token only if the method warrants CSRF protection
+                  // Using the CSRFToken value acquired earlier
+                  xhr.setRequestHeader("X-CSRFToken", csrftoken);
+              }
+          }
+      });
+    });
+  </script>
+{% endblock %}

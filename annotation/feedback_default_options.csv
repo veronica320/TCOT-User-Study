@@ -1,0 +1,9 @@
+shortname,category,description
+missing_information,information,ignores a necessary piece of information in the question.
+semantic_understanding_error,information,misunderstands the meaning of some information in the question.
+hallucinated_information,information,hallucinates some information that doesn't exist in the question.
+external_knowledge_error,information,lacks or misuses some external or commensense knowledge.
+inter-step_logical_error,logic,doesn't logically follow from the previous step.
+within-step_logical_error,logic,has a logical error within itself.
+problematic_question,other,The question itself is problematic.
+other,other,There are other issues not covered by the above categories.
