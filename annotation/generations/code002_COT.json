@@ -1,0 +1,25 @@
+{
+  "prompts-file": "",
+  "dataset": "GSM8K",
+  "split": "test",
+  "date-generated": "09/05/2022",
+  "generation-model": "code002",
+  "generations": [
+    {
+      "prompt": [
+        "Carla is downloading a 200 GB file. Normally she can download 2 GB/minute, but 40% of the way through the download, Windows forces a restart to install updates, which takes 20 minutes. Then Carla has to restart the download from the beginning. How load does it take to download the file?"
+      ],
+      "generation": [
+        "1. She can download 2 GB/minute. ",
+        "2. She has to download 200 GB. ",
+        "3. So it will take 200 / 2 = 100 minutes. ",
+        "4. 40% of the way through the download, Windows forces a restart to install updates, which takes 20 minutes. ",
+        "5. So she has to restart the download from the beginning. ",
+        "6. So she has to download the file for 100 + 20 = 120 minutes. ",
+        "7. The answer is 120."
+      ],
+      "p": 0.0,
+      "prompt-index": 234
+    }
+  ]
+}

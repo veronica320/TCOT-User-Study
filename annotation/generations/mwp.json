@@ -1,0 +1,8 @@
+[
+    {
+        "name": "Math Word Problems",
+        "description": "Can a language model solve a math word problem?",
+        "details": "",
+        "locations": ["generations/code002_COT.json"]
+    }
+]

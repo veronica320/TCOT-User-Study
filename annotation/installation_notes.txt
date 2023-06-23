@@ -1,0 +1,6 @@
+Installation: 
+brew install mysql
+open -e ~/.zshrc
+export PATH=$PATH:/path/to/your/mysql/bin
+e.g. export PATH=$PATH:/usr/local/opt/mysql/bin
+source ~/.zshrc
