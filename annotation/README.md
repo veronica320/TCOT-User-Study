@@ -5,11 +5,26 @@ The annotation tool is built using the Django library for it's SQLite object-rel
 Dependency and virtual environment management is handled using pipenv.
 
 ## Initializing and launching backend
-1. Install dependencies using `pipenv install`.
-2. Create SQLite database with  `pipenv run python manage.py makemigrations core`
-3. Migrate SQLite database with `pipenv run python manage.py migrate`.
-4. Populate database by running `pipenv run python populate_database.py --generations_path=generations.json --version=1.0.0`.
-5. Run `pipenv run python manage.py runserver`.
+1. Install dependencies using
+```
+pipenv install
+```
+3. Create SQLite database with
+```
+pipenv run python manage.py makemigrations core
+```
+4. Migrate SQLite database:
+```
+pipenv run python manage.py migrate
+```
+5. Populate database with a sample Math Word Problem generation:
+```
+pipenv run python populate_database.py --generations_path=generations/mwp.json --version=1.0.0
+```
+6. Run the server:
+```
+pipenv run python manage.py runserver
+```
 
 ## Migrating Database
 1. Create migrations by running `pipenv run python manage.py makemigrations core`.
