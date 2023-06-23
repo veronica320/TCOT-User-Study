@@ -44,8 +44,8 @@
             {% if user.is_authenticated %}
               <li class="nav-item"> <a class="nav-link" href="/">Play</a> </li>
               <li class="nav-item"> <a class="nav-link" href="/help">Help</a> </li>
-              <li class="nav-item"> <a class="nav-link" href="/about">About</a> </li>
-              <li class="nav-item"> <a class="nav-link" href="/leaderboard">Leaderboard</a> </li>
+              <!-- <li class="nav-item"> <a class="nav-link" href="/about">About</a> </li> -->
+              <!-- <li class="nav-item"> <a class="nav-link" href="/leaderboard">Leaderboard</a> </li> -->
               {% if profile and not profile.is_temporary %}
                 <li class="nav-item"> <a class="nav-link" href="/profile/{{request.user.username}}">Profile</a> </li>
                 <li class="nav-item"> <a class="nav-link" href="/logout">Log Out</a> </li>
