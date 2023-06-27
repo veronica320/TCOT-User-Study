@@ -65,55 +65,6 @@ Thank you,
   }
 
   // helper function for adding highlights and emojis
-  function reveal_solutions() {
-    let cards_html = "";
-
-    const human_image = '👩🏽‍💻';
-    const robot_image = '🤖';
-    for (let i = 0; i < all_sentences.length; i++) {
-      const emoji = ((i < boundary) ? human_image : robot_image);
-      const card = (
-          '<div class="card" style="margin-bottom: 0.5rem" id="' +
-          i.toString() +
-          '" style=""> <div class="card-body" style="padding: 0.5em">' +
-          '<table><tr><td><h1 style="margin-right: 1rem">' +
-          emoji +
-          "</h1></td><td>" +
-          all_sentences[i] +
-          '</td></tr></table></div> </div> ');
-      cards_html += card;
-    }
-
-    $("#cards").html(cards_html);
-    $("#remaining").html("All sentences displayed.");
-
-    const current_sentence_index = current_sentence - 1
-    $('#' + current_sentence_index.toString()).addClass('bg-info');
-    $('#' + current_sentence_index.toString()).css('color', 'white');
-
-    if (boundary > current_sentence_index) {
-      $("#result-text").html("Good try! You guessed machine-generated but that sentence was still human-written.")
-    } else if (boundary == current_sentence_index) {
-      $("#result-text").html("Nice job! You guessed correctly.")
-    } else {
-      $("#result-text").html(`Good try! The machine-generated sentences have been revealed. Your guess was ${current_sentence_index - boundary} sentence(s) away from the true boundary.`)
-    }
-
-    $("#analysis").hide();
-    $("#reveal").show();
-
-    const marker = document.querySelector("#marker-after");
-    marker.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function show_points(points) {
-    if (points == 0) {
-          $("#remaining").notify('You received 0 points. Try again!', "success");
-    }
-    if (points > 0) {
-      $("#remaining").notify(`You earned ${points} points!`, "success");
-    }
-  }
 
   function submit_annotation(e) {
     e.preventDefault();
@@ -169,7 +120,6 @@ Thank you,
         "attention_check": attention_check
       },
       success: function (response) {
-        reveal_solutions();
         show_points(points);
       },
       error: function (error) {
