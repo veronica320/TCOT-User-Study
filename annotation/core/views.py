@@ -315,8 +315,10 @@ def annotate(request):
 
     # fluency_reasons = FeedbackOption.objects.filter(is_default=True, category="fluency")
     # substance_reasons = FeedbackOption.objects.filter(is_default=True, category="substance")
-    information_reasons = FeedbackOption.objects.filter(is_default=True, category="information")
-    logic_reasons = FeedbackOption.objects.filter(is_default=True, category="logic")
+    # information_reasons = FeedbackOption.objects.filter(is_default=True, category="information")
+    # logic_reasons = FeedbackOption.objects.filter(is_default=True, category="logic")
+    local_reasons = FeedbackOption.objects.filter(is_default=True, category="local")
+    global_reasons = FeedbackOption.objects.filter(is_default=True, category="global")
     other_reasons = FeedbackOption.objects.filter(is_default=True, category="other")
 
 
@@ -334,8 +336,10 @@ def annotate(request):
         "playlist": playlist_id,
         # "fluency_reasons": fluency_reasons,
         # "substance_reasons": substance_reasons,
-        "information_reasons": information_reasons,
-        "logic_reasons": logic_reasons,
+        # "information_reasons": information_reasons,
+        # "logic_reasons": logic_reasons,
+        "local_reasons": local_reasons,
+        "global_reasons": global_reasons,
         "other_reasons": other_reasons,
 
     })

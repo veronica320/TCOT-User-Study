@@ -1,9 +1,14 @@
-shortname,category,description
-missing_information,information,ignores a necessary piece of information in the question.
-semantic_understanding_error,information,misunderstands the meaning of some information in the question.
-hallucinated_information,information,hallucinates some information that doesn't exist in the question.
-external_knowledge_error,information,lacks or misuses some external or commensense knowledge.
-inter-step_logical_error,logic,doesn't logically follow from the previous step.
-within-step_logical_error,logic,has a logical error within itself.
-problematic_question,other,The question itself is problematic.
-other,other,There are other issues not covered by the above categories.
+shortname,fullname,category,description
+hallucination,Hallucination,local,The model hallucinates some information that doesn't exist in the question.
+semantic_misunderstanding,Semantic Misunderstanding,local,The model misunderstands the meaning of some information in the question.
+missing_step,Missing Step,local,The model skips over some necessary step(s) that should preexist.
+repetitive_step,Repetitive Step,local,This step is basically repeating previous step(s).
+external_knowledge_error,External Knowledge Error,local,"Some external knowledge or commonsense is required, but is missing or incorrectly stated."
+logic_error,Logic Error,local,This step contains a logical fallacy.
+unit_error,Unit Error,local,This step doesn’t use the correct unit required by the question.
+wrong_computation,Wrong Computation,local,"The math expression is correct, but the computation result is wrong."
+syntax_error,Syntax Error,local,There’s a syntax error in the code.
+wrong_approach,Wrong Approach,global,The overall approach is entirely wrong.
+wrong_final_target,Wrong Final Target,global,The model doesn’t compute the final quantity required by the question.
+problematic_question,Problematic Question,other,The question itself is problematic.
+other_issue,Other Issues,other,The issue isn’t covered by the above categories.
