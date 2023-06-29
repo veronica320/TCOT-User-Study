@@ -31,11 +31,11 @@ def _read_json(f):
     return json.loads(_clean_json(text))
 
 
-def _try_create_feedback_option(shortname, category, description):
+def _try_create_feedback_option(shortname, category, description, fullname=None):
     feedback_option = FeedbackOption.objects.filter(shortname=shortname)
     if not feedback_option:
         feedback_option = FeedbackOption.objects.create(
-            shortname=shortname, description=description, category=category)
+            shortname=shortname, description=description, category=category, fullname=fullname)
         print(
             "Successful created new FeedbackOption of category {}: {}: {}".format(
                 category,
@@ -46,6 +46,7 @@ def _try_create_feedback_option(shortname, category, description):
         option = FeedbackOption.objects.get(shortname=shortname)
         option.description = description
         option.category = category
+        option.fullname = fullname
         option.save()
     return feedback_option
 
@@ -129,14 +130,15 @@ def _try_create_generation(gen_text, system, prompt, decoding_strategy):
 def populate_db(generations_path, version):
     # populate pre-set feedback options
     with open('feedback_default_options.csv') as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
+        csv_reader = csv.DictReader(csv_file, delimiter=',')
         line_count = 0
         for row in csv_reader:
             if line_count > 0:
                 new_option = _try_create_feedback_option(
-                    shortname=row[0],
-                    category=row[1],
-                    description=row[2],
+                    shortname=row["shortname"],
+                    category=row["category"],
+                    description=row["description"],
+                    fullname=row["fullname"] if "fullname" in row else None
                 )
             line_count += 1
 

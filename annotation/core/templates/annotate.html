@@ -233,8 +233,14 @@ Thank you,
       redraw_sentences(current_sentence);
       $("#selection").show();
       $("#analysis").hide();
-      if (current_sentence == 1) {
-        $("#prev_step").hide();
+      if (current_sentence < max_sentences) {
+        $("#next").show();
+        $("#incorrect_step").show();
+        $("#correct").hide();
+        $("#global_issue").hide();
+        if (current_sentence == 1) {
+          $("#prev_step").hide();
+      }
       }
     });
 
@@ -351,7 +357,7 @@ Thank you,
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
                   <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
-                    {{reason.fullname}} {{reason.description}}
+                    <strong>{{reason.fullname}}</strong>: <span style="font-size: .85rem;">{{reason.description}}</span>
                   </label>
                 </div>
               {% endfor %}
@@ -363,7 +369,7 @@ Thank you,
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
                   <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
-                    {{reason.fullname}} {{reason.description}}
+                    <strong>{{reason.fullname}}</strong>: <span style="font-size: .85rem;">{{reason.description}}</span>
                   </label>
                 </div>
               {% endfor %}
@@ -374,7 +380,7 @@ Thank you,
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
                 <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
-                  {{reason.fullname}} {{reason.description}}
+                    <strong>{{reason.fullname}}</strong>: <span style="font-size: .85rem;">{{reason.description}}</span>
                 </label>
               </div>
             {% endfor %}
