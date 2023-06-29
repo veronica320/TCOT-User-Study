@@ -65,11 +65,10 @@ Thank you,
   }
 
   function reveal_solutions() {
-    let cards_html = "";
+    // let cards_html = "";
 
-
-    $("#cards").html(cards_html);
-    $("#remaining").html("All sentences displayed.");
+    // $("#cards").html(cards_html);
+    $("#remaining").html("All steps displayed.");
 
     const current_sentence_index = current_sentence - 1
     $('#' + current_sentence_index.toString()).addClass('bg-info');
@@ -107,13 +106,14 @@ Thank you,
       $("#submit").hide();
       $("#select-text").html("You've already annotated this one.")
     {% else %} // user hasn't finished annotating the example, and refreshes the page
-      $("#machine").show();
+      $("#incorrect_step").show();
       $("#next").show();
+      $("#prev_step").hide();
       $("#selection").show();
       redraw_sentences(current_sentence); // initialize the first sentence
     {% endif %}
 
-    function submit_annotation_all_human(e) {
+    function submit_annotation_all_correct(e) {
       e.preventDefault();
 
       // get checkbox values and reset
@@ -202,21 +202,40 @@ Thank you,
       if (current_sentence <= max_sentences) {
         redraw_sentences(current_sentence);
 
+        // show the previous step button if we're not at the first step
+        if (current_sentence > 1) {
+          $("#prev_step").show();
+        }
+
         if (current_sentence == max_sentences) {
           $("#next").hide();
-          $("#human").show();
-          $("#global").show();
+          $("#incorrect_step").hide();
+          $("#correct").show();
+          $("#global_issue").show();
         }
       }
-
       timestamps.push(Date.now());
     });
 
-    $("#machine").click(function() {
+    $("#incorrect_step").click(function() {
       $("#selection").hide();
       $("#analysis").show();
-
+      // hide the global reasons
+      $("#global_reasons").hide();
+      // show the local reasons
+      $("#local_reasons").show();
       timestamps.push(Date.now());
+    });
+
+    // go back to the previous step
+    $("#prev_step").click(function() {
+      current_sentence -= 1;
+      redraw_sentences(current_sentence);
+      $("#selection").show();
+      $("#analysis").hide();
+      if (current_sentence == 1) {
+        $("#prev_step").hide();
+      }
     });
 
     $("#go_back").click(function() {
@@ -224,19 +243,25 @@ Thank you,
       $("#analysis").hide();
     });
 
-    $("#human").click(function(e) {
+    $("#correct").click(function(e) {
       current_sentence = max_sentences + 1;
       $("#revision-form").hide();
       $("#selection").hide();
       // $("#analysis").show();
-      submit_annotation_all_human(e);
+      submit_annotation_all_correct(e);
     });
 
-    $("#global").click(function(e) {
+    $("#global_issue").click(function(e) {
       current_sentence = max_sentences + 1;
       $("#selection").hide();
       $("#analysis").show();
-      $("#revision").show();
+      // hide the local reasons
+      $("#local_reasons").hide();
+      // show the global reasons
+      $("#global_reasons").show();
+      // change the edit instruction
+      $("#edit_instruction").html("Please rewrite the first problematic step to be correct.");
+      $("#edit").attr("placeholder", "{Step ID}. {Your edit}");
     });
 
     $("#continue").click(function() {
@@ -282,72 +307,79 @@ Thank you,
         <p id="select-text" class="text-muted">Select an option:</p>
         <button id="next" type="button" class="btn btn-secondary" style="display: none">
           It's all correct so far.</button>
-        <button type="button" id="human" type="button" class="btn btn-primary" style="display: none; color: white">
+        <button type="button" id="correct" class="btn btn-primary" style="display: none; color: white">
           The entire reasoning chain is correct.
         </button>
-        <button type="button" id="machine" type="button" class="btn btn-info" style="display: none; color: white">
+        <button type="button" id="incorrect_step" class="btn btn-info" style="display: none; color: white">
           This step is incorrect.
         </button>
-        <button type="button" id="global" type="button" class="btn btn-info" style="display: none; color: white">
+        <button type="button" id="final_answer_incorrect" class="btn btn-info" style="display: none; color: white">
+          The final answer is incorrect.
+        <button type="button" id="global_issue" class="btn btn-info" style="display: none; color: white">
           There is a global issue about the reasoning chain.
         </button>
+        <button type="button" id="prev_step" class="btn btn-secondary"> Go Back </button>
+
         <a class="btn btn-primary" id="another" style="display: none; color: white">Annotate another.</a>
       </div>
 
       <div class="card-body" id="analysis" style="display: none">
-        <p class="text-info">
-          Why do you think this step is incorrect? Select all the error categories that apply.
-        </p>
+
         <form id="revision-form">
-          <div>
 
-            <div class="text-dark">Information Errors: The step... </div>
-            {% for reason in information_reasons %}
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
-                <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
-                  {{reason.description}}
-                </label>
-              </div>
-            {% endfor %}
-
-            <div class="text-dark">Logic Errors: The step... </div>
-            {% for reason in logic_reasons %}
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
-                <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
-                  {{reason.description}}
-                </label>
-              </div>
-            {% endfor %}
-
-            <div class="text-dark">Other </div>
-            {% for reason in other_reasons %}
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
-                <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
-                  {{reason.description}}
-                </label>
-              </div>
-            {% endfor %}
-
-          </div>
-
-        <br>
-        <p class="text-info">
-          Please explain more specifically what's wrong, and suggest a fix in Natural Language.
+        <p class="text-info" id="critique_instruction">
+          Please briefly explain what's wrong, and suggest a fix in Natural Language.
         </p>
         <div>
           <input type="text" id="critique" name="critique" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your critique" />
         </div>
 
-
-        <p class="text-info">
+        <p class="text-info" id="edit_instruction">
           Please rewrite this step to be correct.
         </p>
         <div>
           <input type="text" id="edit" name="edit" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your edit" />
         </div>
+
+        <p class="text-info">
+          What error category(s) does the issue belong to? Select all that apply.
+        </p>
+        <div>
+            <div id="local_reasons">
+              <div class="text-dark">Local Errors: </div>
+              {% for reason in local_reasons %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
+                  <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
+                    {{reason.fullname}} {{reason.description}}
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div id="global_reasons">
+              <div class="text-dark">Global Errors: </div>
+              {% for reason in global_reasons %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
+                  <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
+                    {{reason.fullname}} {{reason.description}}
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="text-dark">Other: </div>
+            {% for reason in other_reasons %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
+                <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
+                  {{reason.fullname}} {{reason.description}}
+                </label>
+              </div>
+            {% endfor %}
+
+          </div>
 
           <p class="text-danger" id="no-selection" style="display: none">
             Please select at least one error type.
