@@ -74,10 +74,10 @@ Thank you,
     $('#' + current_sentence_index.toString()).addClass('bg-info');
     $('#' + current_sentence_index.toString()).css('color', 'white');
 
-    $("#result-text").html(`Good job!`)
+    $("#result-text").html(`Your response has been submitted.`)
 
     $("#analysis").hide();
-    $("#submit").show();
+    $("#continue").show();
 
     const marker = document.querySelector("#marker-after");
     marker.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -103,7 +103,8 @@ Thank you,
       current_sentence = {{ annotation }} + 1;
       reveal_solutions();
       $("#another").show();
-      $("#submit").hide();
+      $("#continue").hide();
+      $("#prev_step").hide();
       $("#select-text").html("You've already annotated this one.")
     {% else %} // user hasn't finished annotating the example, and refreshes the page
       $("#incorrect_step").show();
@@ -117,8 +118,23 @@ Thank you,
       e.preventDefault();
 
       // get checkbox values and reset
-      // TODO: add other error types
-      const other = $("#other").val();
+      const hallucination = $("#hallucination").is(":checked");
+      const semantic_misunderstanding = $("#semantic_misunderstanding").is(":checked");
+      const irrelevant_step = $("#irrelevant_step").is(":checked");
+      const missing_step = $("#missing_step").is(":checked");
+      const repetitive_step = $("#repetitive_step").is(":checked");
+      const external_knowledge_error = $("#external_knowledge_error").is(":checked");
+      const logic_error = $("#logic_error").is(":checked");
+      const unit_error = $("#unit_error").is(":checked");
+      const wrong_computation = $("#wrong_computation").is(":checked");
+      const syntax_error = $("#syntax_error").is(":checked");
+      const wrong_approach = $("#wrong_approach").is(":checked");
+      const wrong_final_target = $("#wrong_final_target").is(":checked");
+      const problematic_question = $("#problematic_question").is(":checked");
+      const other_issue = $("#other_issue").is(":checked");
+
+      const critique = $("#critique").val();
+      const edit = $("#edit").val();
 
       $("#note").val('');
       $('input[type=checkbox]').each(function() { // select all checkbox input elements on the page
@@ -138,7 +154,24 @@ Thank you,
           "text": text_id,
           "name": name,
           "playlist_id": playlist,
-          "other": other, // TODO: add other error types
+          // critique and edit
+          "critique": critique,
+          "edit": edit,
+          // create a field for each error type
+          "hallucination": hallucination,
+          "semantic_misunderstanding": semantic_misunderstanding,
+          "irrelevant_step": irrelevant_step,
+          "missing_step": missing_step,
+          "repetitive_step": repetitive_step,
+          "external_knowledge_error": external_knowledge_error,
+          "logic_error": logic_error,
+          "unit_error": unit_error,
+          "wrong_computation": wrong_computation,
+          "syntax_error": syntax_error,
+          "wrong_approach": wrong_approach,
+          "wrong_final_target": wrong_final_target,
+          "problematic_question": problematic_question,
+          "other_issue": other_issue,
           "attention_check": attention_check,
           "timestamps": timestamps.join(',')
         },
@@ -155,20 +188,62 @@ Thank you,
       e.preventDefault();
 
       // get checkbox values and reset
-      const other = $("#other").val();
+      const hallucination = $("#hallucination").is(":checked");
+      const semantic_misunderstanding = $("#semantic_misunderstanding").is(":checked");
+      const irrelevant_step = $("#irrelevant_step").is(":checked");
+      const missing_step = $("#missing_step").is(":checked");
+      const repetitive_step = $("#repetitive_step").is(":checked");
+      const external_knowledge_error = $("#external_knowledge_error").is(":checked");
+      const logic_error = $("#logic_error").is(":checked");
+      const unit_error = $("#unit_error").is(":checked");
+      const wrong_computation = $("#wrong_computation").is(":checked");
+      const syntax_error = $("#syntax_error").is(":checked");
+      const wrong_approach = $("#wrong_approach").is(":checked");
+      const wrong_final_target = $("#wrong_final_target").is(":checked");
+      const problematic_question = $("#problematic_question").is(":checked");
+      const other_issue = $("#other_issue").is(":checked");
 
-      // TODO: add other error types
-      const any =  Boolean(other);
-
+      const some_error_type_selected = hallucination || semantic_misunderstanding || irrelevant_step
+                                      || missing_step || repetitive_step || external_knowledge_error
+                                      || logic_error || unit_error || wrong_computation || syntax_error
+                                      || wrong_approach || wrong_final_target || problematic_question || other_issue;
       $("#note").val('');
       $('input[type=checkbox]').each(function() {
         this.checked = false;
       });
 
+      // get the critique and edit
+      const critique = $("#critique").val();
+      const edit = $("#edit").val();
+
       const current_sentence_index = current_sentence - 1;
 
+      // check if critique and edit are empty
+      all_fields_passed = true;
+      if (critique == "") {
+        $("#no-critique").show();
+        all_fields_passed = false;
+      }
+      else {
+        $("#no-critique").hide();
+      }
+      if (edit == "") {
+        $("#no-edit").show();
+        all_fields_passed = false;
+      }
+      else {
+        $("#no-edit").hide();
+      }
+      if (!some_error_type_selected) {
+        $("#no-selection").show();
+        all_fields_passed = false;
+      }
+      else {
+        $("#no-selection").hide();
+      }
+
       // make ajax request to log annotation
-      if (any) {
+      if (all_fields_passed) {
         console.log('Making ajax call with boundary = ' + current_sentence_index);
         const url = '{% url "save" %}';
         $.ajax({
@@ -179,7 +254,24 @@ Thank you,
             "text": text_id,
             "name": name,
             "playlist_id": playlist,
-            "other": other, // TODO: add other error types
+            // critique and edit
+            "critique": critique,
+            "edit": edit,
+            // create a field for each error type
+            "hallucination": hallucination,
+            "semantic_misunderstanding": semantic_misunderstanding,
+            "irrelevant_step": irrelevant_step,
+            "missing_step": missing_step,
+            "repetitive_step": repetitive_step,
+            "external_knowledge_error": external_knowledge_error,
+            "logic_error": logic_error,
+            "unit_error": unit_error,
+            "wrong_computation": wrong_computation,
+            "syntax_error": syntax_error,
+            "wrong_approach": wrong_approach,
+            "wrong_final_target": wrong_final_target,
+            "problematic_question": problematic_question,
+            "other_issue": other_issue,
             "attention_check": attention_check,
             "timestamps": timestamps.join(',')
           },
@@ -190,8 +282,6 @@ Thank you,
             console.log(error);
           }
         });
-      } else {
-        $("#no-selection").show();
       }
     }
 
@@ -210,7 +300,7 @@ Thank you,
         if (current_sentence == max_sentences) {
           $("#next").hide();
           $("#incorrect_step").hide();
-          $("#correct").show();
+          $("#all_correct").show();
           $("#global_issue").show();
         }
       }
@@ -224,6 +314,7 @@ Thank you,
       $("#global_reasons").hide();
       // show the local reasons
       $("#local_reasons").show();
+      $("#edit_instruction").html("Please rewrite the step to be correct.");
       timestamps.push(Date.now());
     });
 
@@ -236,7 +327,7 @@ Thank you,
       if (current_sentence < max_sentences) {
         $("#next").show();
         $("#incorrect_step").show();
-        $("#correct").hide();
+        $("#all_correct").hide();
         $("#global_issue").hide();
         if (current_sentence == 1) {
           $("#prev_step").hide();
@@ -249,18 +340,30 @@ Thank you,
       $("#analysis").hide();
     });
 
-    $("#correct").click(function(e) {
-      current_sentence = max_sentences + 1;
-      $("#revision-form").hide();
+    $("#all_correct").click(function(e) {
       $("#selection").hide();
-      // $("#analysis").show();
+      $("#revision-form").hide();
+      $("#submit-all-correct").show();
+      $("#go-back-all-correct").show();
+      $("#analysis").hide();
+    });
+
+    $("#submit-all-correct-confirmation").click(function(e) {
+      current_sentence = max_sentences + 1;
       submit_annotation_all_correct(e);
     });
 
+    $("#go-back-all-correct").click(function(e) {
+      $("#selection").show();
+      $("#submit-all-correct").hide();
+      $("#go-back-all-correct").hide();
+    });
+
     $("#global_issue").click(function(e) {
-      current_sentence = max_sentences + 1;
+      // current_sentence = max_sentences + 1;
       $("#selection").hide();
       $("#analysis").show();
+      $("#revision-form").show();
       // hide the local reasons
       $("#local_reasons").hide();
       // show the global reasons
@@ -313,7 +416,7 @@ Thank you,
         <p id="select-text" class="text-muted">Select an option:</p>
         <button id="next" type="button" class="btn btn-secondary" style="display: none">
           It's all correct so far.</button>
-        <button type="button" id="correct" class="btn btn-primary" style="display: none; color: white">
+        <button type="button" id="all_correct" class="btn btn-primary" style="display: none; color: white">
           The entire reasoning chain is correct.
         </button>
         <button type="button" id="incorrect_step" class="btn btn-info" style="display: none; color: white">
@@ -339,6 +442,10 @@ Thank you,
         <div>
           <input type="text" id="critique" name="critique" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your critique" />
         </div>
+        <p class="text-danger" id="no-critique" style="display: none">
+          Please provide a non-empty critique.
+        </p>
+
 
         <p class="text-info" id="edit_instruction">
           Please rewrite this step to be correct.
@@ -346,6 +453,9 @@ Thank you,
         <div>
           <input type="text" id="edit" name="edit" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your edit" />
         </div>
+        <p class="text-danger" id="no-edit" style="display: none">
+          Please provide a non-empty edit.
+        </p>
 
         <p class="text-info">
           What error category(s) does the issue belong to? Select all that apply.
@@ -388,14 +498,19 @@ Thank you,
           </div>
 
           <p class="text-danger" id="no-selection" style="display: none">
-            Please select at least one error type.
+            Please select at least one category.
           </p>
-          <button type="button" id="go_back" class="btn btn-secondary"> Go Back </button>
-          <button type="submit" class="btn btn-info"> Submit </button>
+            <button type="submit" class="btn btn-info"> Submit </button>
+            <button type="button" id="go_back" class="btn btn-secondary"> Go Back </button>
         </form>
       </div>
 
-      <div class="card-body" id="submit" style="display: none">
+      <div class="card-body" id="submit-all-correct" style="display: none">
+        <a class="btn btn-primary" style="color: white" id="submit-all-correct-confirmation">Submit</a>
+        <a class="btn btn-secondary" style="color: white" id="go-back-all-correct">Go Back</a>
+      </div>
+
+      <div class="card-body" id="continue" style="display: none">
         <p class="text-muted" id="result-text"> </p>
         <a class="btn btn-primary" style="color: white" id="continue">Continue</a>
         <button class="btn btn-secondary" type="button" data-toggle="modal" data-target="#helpModal">

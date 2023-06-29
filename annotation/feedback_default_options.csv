@@ -1,6 +1,7 @@
 shortname,fullname,category,description
 hallucination,Hallucination,local,The model hallucinates some information that doesn't exist in the question.
 semantic_misunderstanding,Semantic Misunderstanding,local,The model misunderstands the meaning of some information in the question.
+irrelevant_step,Irrelevant Step,local,This step is irrelevant to solving the problem.
 missing_step,Missing Step,local,The model skips over some necessary step(s) that should preexist.
 repetitive_step,Repetitive Step,local,This step is basically repeating previous step(s).
 external_knowledge_error,External Knowledge Error,local,"Some external knowledge or commonsense is required, but is missing or incorrectly stated."
