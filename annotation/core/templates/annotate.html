@@ -64,6 +64,26 @@ Thank you,
     $("#remaining").html((max_sentences - current_sentence).toString() + " steps remaining")
   }
 
+  function reveal_solutions() {
+    let cards_html = "";
+
+
+    $("#cards").html(cards_html);
+    $("#remaining").html("All sentences displayed.");
+
+    const current_sentence_index = current_sentence - 1
+    $('#' + current_sentence_index.toString()).addClass('bg-info');
+    $('#' + current_sentence_index.toString()).css('color', 'white');
+
+    $("#result-text").html(`Good job!`)
+
+    $("#analysis").hide();
+    $("#submit").show();
+
+    const marker = document.querySelector("#marker-after");
+    marker.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   function load_next_annotation() {
     let searchParams = new URLSearchParams(window.location.search)
 
@@ -82,6 +102,7 @@ Thank you,
     // `annotation`: whether user has finished annotating the current example
     {% if annotation >= 0 %} // user finished annotating the example, and refreshes the page
       current_sentence = {{ annotation }} + 1;
+      reveal_solutions();
       $("#another").show();
       $("#submit").hide();
       $("#select-text").html("You've already annotated this one.")
@@ -122,7 +143,7 @@ Thank you,
           "timestamps": timestamps.join(',')
         },
         success: function (response) {
-          // show_points(points);
+          reveal_solutions();
         },
         error: function (error) {
           console.log(error);
@@ -163,7 +184,7 @@ Thank you,
             "timestamps": timestamps.join(',')
           },
           success: function (response) {
-            // show_points(points);
+            reveal_solutions();
           },
           error: function (error) {
             console.log(error);
