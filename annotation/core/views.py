@@ -79,7 +79,7 @@ def _build_counts_dict(user, playlist_name=None, attention_check=False):
         annotations = Annotation.objects.filter(generation__in=generations_in_playlist)
     else:
         annotations = Annotation.objects
-      
+
 
     user_annotations = annotations.filter(
         annotator=user,
@@ -349,7 +349,7 @@ def save(request):
     print("Playlist id in save: ", playlist_id)
 
     boundary = int(request.POST['boundary'])
-    points = request.POST['points']
+    # points = request.POST['points']
     attention_check = request.POST['attention_check']
 
     annotation = Annotation.objects.create(
@@ -357,7 +357,7 @@ def save(request):
         generation=Generation.objects.get(pk=text),
         playlist=playlist_id,
         boundary=boundary,
-        points=points,
+        # points=points,
         attention_check=attention_check
     )
 
@@ -370,18 +370,21 @@ def save(request):
     feedback_options = [
         v[0] for v in FeedbackOption.objects.filter(is_default=True).values_list("shortname")]
     for option in feedback_options:
+        # TODO: add other error types
+        if option != "other":
+            continue
         if request.POST[option] == 'true':
             annotation.reason.add(FeedbackOption.objects.get(shortname=option))
 
-    other_reason = request.POST['other_reason']
-    if other_reason:
-        new_reason = FeedbackOption.objects.create(
-            shortname=str(
-                hash(other_reason)),
-            category="other",
-            description=other_reason,
-            is_default=False)
-        annotation.reason.add(new_reason)
+    # other_reason = request.POST['other']
+    # if other_reason:
+    #     new_reason = FeedbackOption.objects.create(
+    #         shortname=str(
+    #             hash(other_reason)),
+    #         category="other",
+    #         description=other_reason,
+    #         is_default=False)
+    #     annotation.reason.add(new_reason)
 
     remaining = request.session.get('remaining', BATCH_SIZE)
     request.session['remaining'] = remaining - 1

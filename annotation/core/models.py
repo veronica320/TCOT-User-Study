@@ -93,7 +93,7 @@ class Annotation(models.Model):
     generation = models.ForeignKey(Generation, on_delete=models.DO_NOTHING)
     playlist = models.CharField(max_length=30, default='')
     boundary = models.IntegerField()
-    points = models.IntegerField()
+    # points = models.IntegerField()
     reason = models.ManyToManyField(FeedbackOption)
     attention_check = models.BooleanField(default=False)
 

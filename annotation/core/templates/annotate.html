@@ -80,12 +80,12 @@ Thank you,
 
     // query param logic through django templating
     // `annotation`: whether user has finished annotating the current example
-    {% if annotation >= 0 %} // user finished annotating the example, and refreshes the page 
+    {% if annotation >= 0 %} // user finished annotating the example, and refreshes the page
       current_sentence = {{ annotation }} + 1;
       $("#another").show();
-      $("#reveal").hide();
+      $("#submit").hide();
       $("#select-text").html("You've already annotated this one.")
-    {% else %} // user hasn't finished annotating the example, and refreshes the page 
+    {% else %} // user hasn't finished annotating the example, and refreshes the page
       $("#machine").show();
       $("#next").show();
       $("#selection").show();
@@ -100,8 +100,8 @@ Thank you,
       const other = $("#other").val();
 
       $("#note").val('');
-      $('input[type=checkbox]').each(function() {
-        this.checked = false;
+      $('input[type=checkbox]').each(function() { // select all checkbox input elements on the page
+        this.checked = false; // uncheck all checkboxes
       });
 
       const current_sentence_index = current_sentence - 1;
@@ -136,26 +136,15 @@ Thank you,
       // get checkbox values and reset
       const other = $("#other").val();
 
-      const any = grammar || repetition || irrelevant || contradicts_sentence ||
-                  contradicts_knowledge || common_sense || coreference ||
-                  generic || Boolean(other);
+      // TODO: add other error types
+      const any =  Boolean(other);
 
       $("#note").val('');
       $('input[type=checkbox]').each(function() {
         this.checked = false;
       });
 
-      const max_points = 5;
-      let points = 0;
-
       const current_sentence_index = current_sentence - 1;
-      if (attention_check) {
-        points = 0;
-      } else if (current_sentence_index == boundary) {
-        points = max_points;
-      } else if (current_sentence_index > boundary) {
-        points = Math.max(max_points - Math.abs(boundary - current_sentence_index), 0);
-      }
 
       // make ajax request to log annotation
       if (any) {
@@ -169,16 +158,7 @@ Thank you,
             "text": text_id,
             "name": name,
             "playlist_id": playlist,
-            "grammar": grammar,
-            "repetition": repetition,
-            "irrelevant": irrelevant,
-            "contradicts_sentence": contradicts_sentence,
-            "contradicts_knowledge": contradicts_knowledge,
-            "common_sense": common_sense,
-            "coreference": coreference,
-            "generic": generic,
-            "other": other,
-            "points": points,
+            "other": other, // TODO: add other error types
             "attention_check": attention_check,
             "timestamps": timestamps.join(',')
           },
@@ -214,7 +194,6 @@ Thank you,
     $("#machine").click(function() {
       $("#selection").hide();
       $("#analysis").show();
-      $("#revision").show();
 
       timestamps.push(Date.now());
     });
@@ -222,14 +201,13 @@ Thank you,
     $("#go_back").click(function() {
       $("#selection").show();
       $("#analysis").hide();
-      $("#revision").hide();
     });
 
     $("#human").click(function(e) {
       current_sentence = max_sentences + 1;
       $("#revision-form").hide();
       $("#selection").hide();
-      $("#analysis").show();
+      // $("#analysis").show();
       submit_annotation_all_human(e);
     });
 
@@ -354,11 +332,11 @@ Thank you,
             Please select at least one error type.
           </p>
           <button type="button" id="go_back" class="btn btn-secondary"> Go Back </button>
-          <button type="submit" class="btn btn-info"> Reveal </button>
+          <button type="submit" class="btn btn-info"> Submit </button>
         </form>
       </div>
 
-      <div class="card-body" id="reveal" style="display: none">
+      <div class="card-body" id="submit" style="display: none">
         <p class="text-muted" id="result-text"> </p>
         <a class="btn btn-primary" style="color: white" id="continue">Continue</a>
         <button class="btn btn-secondary" type="button" data-toggle="modal" data-target="#helpModal">
