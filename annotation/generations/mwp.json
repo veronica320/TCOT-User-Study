@@ -2,7 +2,7 @@
     {
         "name": "Math Word Problems",
         "description": "Can a language model solve a math word problem?",
-        "details": "",
+        "details": "GSM8k dataset",
         "locations": ["generations/code002_COT.json"]
     }
 ]

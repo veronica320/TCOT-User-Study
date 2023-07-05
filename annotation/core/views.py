@@ -206,6 +206,7 @@ def profile(request, username):
     counts['nyt'] = _build_counts_dict(user, "New York Times")
     counts['speeches'] = _build_counts_dict(user, "Presidential Speeches")
     counts['recipes'] = _build_counts_dict(user, "Recipes")
+    counts['mwp'] = _build_counts_dict(user, "Math Word Problems")
 
     # Check if the user has a profile object
     if Profile.objects.filter(user=user).exists():

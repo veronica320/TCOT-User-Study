@@ -15,10 +15,7 @@
 
 This project is for research purposes *only*. Exploiting vulnerabilities in this
 codebase does nothing but lose us time that we would prefer to spend doing actual
-research. So, please, be nice to the codebase.
-
-Thank you,
---The RoFT Team (Liam, Daphne, Arun, Sherry)
+research. So, please, be nice to the codebase. Thank you!
 -->
 {% extends 'base.html' %}
 
@@ -310,6 +307,7 @@ Thank you,
     $("#incorrect_step").click(function() {
       $("#selection").hide();
       $("#analysis").show();
+      $("#revision-form").show();
       // hide the global reasons
       $("#global_reasons").hide();
       // show the local reasons
@@ -425,7 +423,7 @@ Thank you,
         <button type="button" id="final_answer_incorrect" class="btn btn-info" style="display: none; color: white">
           The final answer is incorrect.
         <button type="button" id="global_issue" class="btn btn-info" style="display: none; color: white">
-          There is a global issue about the reasoning chain.
+          There is a global issue.
         </button>
         <button type="button" id="prev_step" class="btn btn-secondary"> Go Back </button>
 
