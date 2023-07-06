@@ -1,0 +1,603 @@
+<!--
+Interactive examples for tutorial purpose.
+-->
+
+{% extends 'base.html' %}
+
+{% block content %}
+<script>
+  const all_sentences = {{ sentences|safe }};
+  const boundary = {{boundary}};
+  const max_sentences = {{max_sentences}};
+  const text_id = "{{ text_id }}";
+  const name = "{{ name }}";
+  const playlist = "{{ playlist }}";
+
+  // stores list of UNIX timestamps on button presses
+  let timestamps = [Date.now()];
+  let current_sentence = 1;
+
+  function update_params_in_url() {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("qid")) {
+      params.set("qid", text_id);
+    }
+    if (!params.has("playlist")) {
+      params.set("playlist", playlist);
+    }
+    var url = new URL(window.location.href);
+    url.search = params
+    url = url.toString()
+    window.history.replaceState({url: url}, null, url);
+  }
+
+  // helper function for adding new sentences
+  function redraw_sentences(current_sentence) {
+    const sentences = all_sentences.slice(0, current_sentence);
+    let cards_html = "";
+
+    for (let i = 0; i < sentences.length; i++) {
+      const card = '<div class="card" id="' + i.toString() + '" style="margin-bottom: 0.5rem"> <div class="card-body"> ' + sentences[i] +  '</div> </div> ';
+      cards_html += card;
+    }
+
+    $("#cards").html(cards_html);
+    $("#remaining").html((max_sentences - current_sentence).toString() + " steps remaining")
+  }
+
+  function reveal_solutions() {
+    // let cards_html = "";
+
+    // $("#cards").html(cards_html);
+    $("#remaining").html("All steps displayed.");
+
+    const current_sentence_index = current_sentence - 1
+    $('#' + current_sentence_index.toString()).addClass('bg-info');
+    $('#' + current_sentence_index.toString()).css('color', 'white');
+
+    $("#result-text").html(`Your response has been submitted.`)
+
+    $("#analysis").hide();
+    $("#continue").show();
+
+    const marker = document.querySelector("#marker-after");
+    marker.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function load_next_annotation() {
+    let searchParams = new URLSearchParams(window.location.search)
+
+    if (searchParams.has('playlist')) {
+      window.location.replace(`/annotate?playlist=${searchParams.get('playlist')}`);
+    } else {
+      window.location.replace('/annotate');
+    }
+  }
+
+  // user interaction logic
+  $(document).ready(function() {
+    console.log("Document ready!");
+
+    update_params_in_url();
+
+    // query param logic through django templating
+    // `annotation`: whether user has finished annotating the current example
+    {% if annotation >= 0 %} // user finished annotating the example, and refreshes the page
+      current_sentence = {{ annotation }} + 1;
+      reveal_solutions();
+      $("#another").show();
+      $("#continue").hide();
+      $("#prev_step").hide();
+      $("#select-text").html("You've already annotated this one.")
+    {% else %} // user hasn't finished annotating the example, and refreshes the page
+      $("#incorrect_step").show();
+      $("#next").show();
+      $("#prev_step").hide();
+      $("#selection").show();
+      redraw_sentences(current_sentence); // initialize the first sentence
+    {% endif %}
+
+    function submit_annotation_all_correct(e) {
+      e.preventDefault();
+
+      // get checkbox values and reset
+      const hallucination = $("#hallucination").is(":checked");
+      const semantic_misunderstanding = $("#semantic_misunderstanding").is(":checked");
+      const irrelevant_step = $("#irrelevant_step").is(":checked");
+      const missing_step = $("#missing_step").is(":checked");
+      const repetitive_step = $("#repetitive_step").is(":checked");
+      const external_knowledge_error = $("#external_knowledge_error").is(":checked");
+      const logic_error = $("#logic_error").is(":checked");
+      const unit_error = $("#unit_error").is(":checked");
+      const wrong_computation = $("#wrong_computation").is(":checked");
+      const syntax_error = $("#syntax_error").is(":checked");
+      const wrong_approach = $("#wrong_approach").is(":checked");
+      const wrong_final_target = $("#wrong_final_target").is(":checked");
+      const problematic_question = $("#problematic_question").is(":checked");
+      const other_issue = $("#other_issue").is(":checked");
+
+      const critique = $("#critique").val();
+      const edit = $("#edit").val();
+
+      $("#note").val('');
+      $('input[type=checkbox]').each(function() { // select all checkbox input elements on the page
+        this.checked = false; // uncheck all checkboxes
+      });
+
+      const current_sentence_index = current_sentence - 1;
+
+      // make ajax request to log annotation
+      console.log('Making ajax call with boundary = ' + current_sentence_index);
+      const url = '{% url "save" %}';
+      $.ajax({
+        type: 'POST',
+        url: url,
+        data: {
+          "boundary": current_sentence_index,
+          "text": text_id,
+          "name": name,
+          "playlist_id": playlist,
+          // critique and edit
+          "critique": critique,
+          "edit": edit,
+          // create a field for each error type
+          "hallucination": hallucination,
+          "semantic_misunderstanding": semantic_misunderstanding,
+          "irrelevant_step": irrelevant_step,
+          "missing_step": missing_step,
+          "repetitive_step": repetitive_step,
+          "external_knowledge_error": external_knowledge_error,
+          "logic_error": logic_error,
+          "unit_error": unit_error,
+          "wrong_computation": wrong_computation,
+          "syntax_error": syntax_error,
+          "wrong_approach": wrong_approach,
+          "wrong_final_target": wrong_final_target,
+          "problematic_question": problematic_question,
+          "other_issue": other_issue,
+          "timestamps": timestamps.join(',')
+        },
+        success: function (response) {
+          reveal_solutions();
+        },
+        error: function (error) {
+          console.log(error);
+        }
+      });
+    }
+
+    function submit_annotation(e) {
+      e.preventDefault();
+
+      // get checkbox values and reset
+      const hallucination = $("#hallucination").is(":checked");
+      const semantic_misunderstanding = $("#semantic_misunderstanding").is(":checked");
+      const irrelevant_step = $("#irrelevant_step").is(":checked");
+      const missing_step = $("#missing_step").is(":checked");
+      const repetitive_step = $("#repetitive_step").is(":checked");
+      const external_knowledge_error = $("#external_knowledge_error").is(":checked");
+      const logic_error = $("#logic_error").is(":checked");
+      const unit_error = $("#unit_error").is(":checked");
+      const wrong_computation = $("#wrong_computation").is(":checked");
+      const syntax_error = $("#syntax_error").is(":checked");
+      const wrong_approach = $("#wrong_approach").is(":checked");
+      const wrong_final_target = $("#wrong_final_target").is(":checked");
+      const problematic_question = $("#problematic_question").is(":checked");
+      const other_issue = $("#other_issue").is(":checked");
+
+      const some_error_type_selected = hallucination || semantic_misunderstanding || irrelevant_step
+                                      || missing_step || repetitive_step || external_knowledge_error
+                                      || logic_error || unit_error || wrong_computation || syntax_error
+                                      || wrong_approach || wrong_final_target || problematic_question || other_issue;
+      $("#note").val('');
+      $('input[type=checkbox]').each(function() {
+        this.checked = false;
+      });
+
+      // get the critique and edit
+      const critique = $("#critique").val();
+      const edit = $("#edit").val();
+
+      const current_sentence_index = current_sentence - 1;
+
+      // check if critique and edit are empty
+      all_fields_passed = true;
+      if (critique == "") {
+        $("#no-critique").show();
+        all_fields_passed = false;
+      }
+      else {
+        $("#no-critique").hide();
+      }
+      if (edit == "") {
+        $("#no-edit").show();
+        all_fields_passed = false;
+      }
+      else {
+        $("#no-edit").hide();
+      }
+      if (!some_error_type_selected) {
+        $("#no-selection").show();
+        all_fields_passed = false;
+      }
+      else {
+        $("#no-selection").hide();
+      }
+
+      // make ajax request to log annotation
+      if (all_fields_passed) {
+        console.log('Making ajax call with boundary = ' + current_sentence_index);
+        const url = '{% url "save" %}';
+        $.ajax({
+          type: 'POST',
+          url: url,
+          data: {
+            "boundary": current_sentence_index,
+            "text": text_id,
+            "name": name,
+            "playlist_id": playlist,
+            // critique and edit
+            "critique": critique,
+            "edit": edit,
+            // create a field for each error type
+            "hallucination": hallucination,
+            "semantic_misunderstanding": semantic_misunderstanding,
+            "irrelevant_step": irrelevant_step,
+            "missing_step": missing_step,
+            "repetitive_step": repetitive_step,
+            "external_knowledge_error": external_knowledge_error,
+            "logic_error": logic_error,
+            "unit_error": unit_error,
+            "wrong_computation": wrong_computation,
+            "syntax_error": syntax_error,
+            "wrong_approach": wrong_approach,
+            "wrong_final_target": wrong_final_target,
+            "problematic_question": problematic_question,
+            "other_issue": other_issue,
+            "timestamps": timestamps.join(',')
+          },
+          success: function (response) {
+            reveal_solutions();
+          },
+          error: function (error) {
+            console.log(error);
+          }
+        });
+      }
+    }
+
+    // adding new sentence
+    $("#next").click(function() {
+      current_sentence += 1;
+
+      if (current_sentence <= max_sentences) {
+        redraw_sentences(current_sentence);
+
+        // show the previous step button if we're not at the first step
+        if (current_sentence > 1) {
+          $("#prev_step").show();
+        }
+
+        if (current_sentence == max_sentences) {
+          $("#next").hide();
+          $("#incorrect_step").hide();
+          $("#all_correct").show();
+          $("#global_issue").show();
+        }
+      }
+      timestamps.push(Date.now());
+    });
+
+    $("#incorrect_step").click(function() {
+      $("#selection").hide();
+      $("#analysis").show();
+      $("#revision-form").show();
+      // hide the global reasons
+      $("#global_reasons").hide();
+      // show the local reasons
+      $("#local_reasons").show();
+      $("#edit_instruction").html("Please rewrite the step to be correct.");
+      timestamps.push(Date.now());
+    });
+
+    // go back to the previous step
+    $("#prev_step").click(function() {
+      current_sentence -= 1;
+      redraw_sentences(current_sentence);
+      $("#selection").show();
+      $("#analysis").hide();
+      if (current_sentence < max_sentences) {
+        $("#next").show();
+        $("#incorrect_step").show();
+        $("#all_correct").hide();
+        $("#global_issue").hide();
+        if (current_sentence == 1) {
+          $("#prev_step").hide();
+      }
+      }
+    });
+
+    $("#go_back").click(function() {
+      $("#selection").show();
+      $("#analysis").hide();
+    });
+
+    $("#all_correct").click(function(e) {
+      $("#selection").hide();
+      $("#revision-form").hide();
+      $("#submit-all-correct").show();
+      $("#go-back-all-correct").show();
+      $("#analysis").hide();
+    });
+
+    $("#submit-all-correct-confirmation").click(function(e) {
+      current_sentence = max_sentences + 1;
+      submit_annotation_all_correct(e);
+    });
+
+    $("#go-back-all-correct").click(function(e) {
+      $("#selection").show();
+      $("#submit-all-correct").hide();
+      $("#go-back-all-correct").hide();
+    });
+
+    $("#global_issue").click(function(e) {
+      // current_sentence = max_sentences + 1;
+      $("#selection").hide();
+      $("#analysis").show();
+      $("#revision-form").show();
+      // hide the local reasons
+      $("#local_reasons").hide();
+      // show the global reasons
+      $("#global_reasons").show();
+      // change the edit instruction
+      $("#edit_instruction").html("Please rewrite the first problematic step to be correct.");
+      $("#edit").attr("placeholder", "{Step ID}. {Your edit}");
+    });
+
+    $("#continue").click(function() {
+      load_next_annotation()
+    })
+
+    $("#another").click(function() {
+      load_next_annotation()
+    })
+
+    // processing annotator decision
+    $("#revision-form").submit(submit_annotation);
+  });
+</script>
+
+<div class="row">
+  <div class="col-md">
+  <div class="col-md" style="padding: 2rem">
+    <h2 class="text-muted"> <strong>Is the reasoning chain correct?</strong> </h2>
+    <p class="text-muted" style="margin-bottom: 1rem;">
+      You'll see a math question and a model-generated reasoning chain, one step at a time. Your task is to decide at which step (if at all) the reasoning becomes incorrect. Please click the blue button <strong> as soon as</strong> you spot an incorrect step.
+
+      <!--The boundaries are not uniformly or normally distributed, so treat every single instance in isolation.-->
+    </p>
+
+    <br />
+    <small class="text-muted">Question:</small>
+
+    <p class="alert alert-info">
+    {% autoescape off %}
+      {{prompt}}
+    {% endautoescape  %}
+    </p>
+
+    <small class="text-muted">Model-generated Reasoning Chain:</small>
+
+    <div style="margin-top: 0.5rem" id="cards"></div>
+
+    <small id="remaining" class="text-muted"></small>
+    <br /> <br />
+    <div class="card" style="margin-bottom: 2rem">
+      <div class="card-body" id="selection">
+        <p id="select-text" class="text-muted">Select an option:</p>
+        <button id="next" type="button" class="btn btn-secondary" style="display: none">
+          It's all correct so far.</button>
+        <button type="button" id="all_correct" class="btn btn-primary" style="display: none; color: white">
+          The entire reasoning chain is correct.
+        </button>
+        <button type="button" id="incorrect_step" class="btn btn-info" style="display: none; color: white">
+          This step is incorrect.
+        </button>
+        <button type="button" id="final_answer_incorrect" class="btn btn-info" style="display: none; color: white">
+          The final answer is incorrect.
+        <button type="button" id="global_issue" class="btn btn-info" style="display: none; color: white">
+          There is a global issue.
+        </button>
+        <button type="button" id="prev_step" class="btn btn-secondary"> Go Back </button>
+
+        <a class="btn btn-primary" id="another" style="display: none; color: white">Annotate another.</a>
+      </div>
+
+      <div class="card-body" id="analysis" style="display: none">
+
+        <form id="revision-form">
+
+        <p class="text-info" id="critique_instruction">
+          Please briefly explain what's wrong, and suggest a fix in Natural Language.
+        </p>
+        <div>
+          <input type="text" id="critique" name="critique" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your critique" />
+        </div>
+        <p class="text-danger" id="no-critique" style="display: none">
+          Please provide a non-empty critique.
+        </p>
+
+
+        <p class="text-info" id="edit_instruction">
+          Please rewrite this step to be correct.
+        </p>
+        <div>
+          <input type="text" id="edit" name="edit" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your edit" />
+        </div>
+        <p class="text-danger" id="no-edit" style="display: none">
+          Please provide a non-empty edit.
+        </p>
+
+        <p class="text-info">
+          What error category(s) does the issue belong to? Select all that apply.
+        </p>
+        <div>
+            <div id="local_reasons">
+              <div class="text-dark">Local Errors: </div>
+              {% for reason in local_reasons %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
+                  <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
+                    <strong>{{reason.fullname}}</strong>: <span style="font-size: .85rem;">{{reason.description}}</span>
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div id="global_reasons">
+              <div class="text-dark">Global Errors: </div>
+              {% for reason in global_reasons %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
+                  <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
+                    <strong>{{reason.fullname}}</strong>: <span style="font-size: .85rem;">{{reason.description}}</span>
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="text-dark">Other: </div>
+            {% for reason in other_reasons %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="{{reason.shortname}}" value="{{reason.shortname}} error">
+                <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
+                    <strong>{{reason.fullname}}</strong>: <span style="font-size: .85rem;">{{reason.description}}</span>
+                </label>
+              </div>
+            {% endfor %}
+
+          </div>
+
+          <p class="text-danger" id="no-selection" style="display: none">
+            Please select at least one category.
+          </p>
+            <button type="submit" class="btn btn-info"> Submit </button>
+            <button type="button" id="go_back" class="btn btn-secondary"> Go Back </button>
+        </form>
+      </div>
+
+      <div class="card-body" id="submit-all-correct" style="display: none">
+        <a class="btn btn-primary" style="color: white" id="submit-all-correct-confirmation">Submit</a>
+        <a class="btn btn-secondary" style="color: white" id="go-back-all-correct">Go Back</a>
+      </div>
+
+      <div class="card-body" id="continue" style="display: none">
+        <p class="text-muted" id="result-text"> </p>
+        <a class="btn btn-primary" style="color: white" id="continue">Continue</a>
+        <button class="btn btn-secondary" type="button" data-toggle="modal" data-target="#helpModal">
+          Need some help?
+        </button>
+      </div>
+    </div>
+    <div id="marker-after" />
+  </div>
+  <div class="col-md" />
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="helpModalLabel">Common Problems in Generated Text</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="table">
+          <tr>
+          <th>Problem</th>
+          <th>Example</th>
+          </tr>
+          <tr>
+            <td>Repetition</td>
+            <td>-<code>The cat slept on the window and on the window and on the window.</code><br/>-<code>To make a good cup of tea, you first have to make a good cup of tea.</code></td>
+          </tr>
+          <tr>
+            <td>Common-sense errors</td>
+            <td>-<code>The unicorn had four horns.</code><br/>-<code>Shortly after sunset, the sun was bright in the sky.</code></td>
+          </tr>
+          <tr>
+            <td>Factual errors</td>
+            <td><code>The president of the United States is Clark Kent.</code></td>
+          </tr>
+          <tr>
+            <td>Incoherency and topic drift</td>
+            <td>Consecutive sentences rapidly switch between topics so that there is little or no logical progression between ideas.</td>
+          </tr>
+        <table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" style="margin:auto;display:block" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script>
+    $(function() {
+      // This function gets cookie with a given name
+      function getCookie(name) {
+          var cookieValue = null;
+          if (document.cookie && document.cookie != '') {
+              var cookies = document.cookie.split(';');
+              for (var i = 0; i < cookies.length; i++) {
+                  var cookie = jQuery.trim(cookies[i]);
+                  // Does this cookie string begin with the name we want?
+                  if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+      var csrftoken = getCookie('csrftoken');
+
+      /*
+      The functions below will create a header with csrftoken
+      */
+
+      function csrfSafeMethod(method) {
+          // these HTTP methods do not require CSRF protection
+          return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+      }
+      function sameOrigin(url) {
+          // test that a given url is a same-origin URL
+          // url could be relative or scheme relative or absolute
+          var host = document.location.host; // host + port
+          var protocol = document.location.protocol;
+          var sr_origin = '//' + host;
+          var origin = protocol + sr_origin;
+          // Allow absolute or scheme relative URLs to same origin
+          return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+              (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+              // or any other URL that isn't scheme relative or absolute i.e relative.
+              !(/^(\/\/|http:|https:).*/.test(url));
+      }
+
+      $.ajaxSetup({
+          beforeSend: function(xhr, settings) {
+              if (!csrfSafeMethod(settings.type) && sameOrigin(settings.url)) {
+                  // Send the token to same-origin, relative URLs only.
+                  // Send the token only if the method warrants CSRF protection
+                  // Using the CSRFToken value acquired earlier
+                  xhr.setRequestHeader("X-CSRFToken", csrftoken);
+              }
+          }
+      });
+    });
+  </script>
+{% endblock %}

@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path
 from core.views import (
     annotate,
+    examples,
     about,
     help,
     leaderboard,
@@ -33,6 +34,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('profile/<str:username>/', profile, name='profile'),
     path('annotate/', annotate, name="annotate"),
+    path('examples/', examples, name="examples"),
     path('leaderboard/', leaderboard, name="leaderboard"),
     path('save/', save, name="save"),
     path('login/', log_in, name='log_in'),
@@ -41,5 +43,5 @@ urlpatterns = [
     path('logout/', log_out, name="log_out"),
     path('help/', help, name="help"),
     path('about/', about, name="about"),
-    path('', play, name="play")
+    path('', play, name="play"),
 ]

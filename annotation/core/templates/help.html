@@ -18,34 +18,6 @@
     If you have looked at all steps and haven't found an error, you can select <code>"The entire chain is correct"</code> at the end.<br>
     Or, if you think there is an issue that can't be localized to any step, you can select <code>"There's a global issue"</code> at the end.
 
-    <h3 style="margin-top: 2rem" class="text-muted"><strong>Examples</strong></h3>
-    <h5 style="margin-top: 1rem" class="text-muted"><strong>Example 1</strong></h5>
-    <small class="text-muted">Question:</small>
-    <p class="alert alert-info">
-    In a week, a tow truck pulled 10 cars for each of the first 3 days and then 4 fewer cars on each of the remaining 4 days. How many cars did it tow in total?
-    </p>
-    <small class="text-muted">Model-generated reasoning chain:</small>
-    <p class="alert alert-info">
-    <strong>✅ 1. </strong> The tow truck pulled 3 * 10 = 30 cars for the first three days. <br>
-    <strong>✅ 2. </strong> On the remaining days it pulled 4 fewer cars each day. <br>
-    <strong>❌ 3. </strong> That means it pulled 4 * 4 = 16 cars. <br>
-    </p>
-    <p class="text-info" id="critique_instruction">
-      Please briefly explain what's wrong, and suggest a fix in Natural Language.
-    </p>
-    <p>
-    <div>
-      <strong>Critique</strong>: <input type="text" id="critique" name="critique" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="The model misunderstood '4 fewer cars' as just '4 cars'." />
-    </div>
-
-    <p class="text-info" id="edit_instruction">
-      Please rewrite this step to be correct.
-    </p>
-    <div>
-      <strong>Edit</strong>: <input type="text" id="critique" name="critique" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="3. That means it pulled (10 - 4) * 4 = 24 cars." />
-    </div>
-
-
     <h3 style="margin-top: 2rem" class="text-muted"><strong>Common Error Categories</strong></h3>
     <table class="table">
       <tr>
@@ -58,12 +30,16 @@
       </tr>
     </table>
 
+    <h3 style="margin-top: 2rem" class="text-muted"><strong>Examples</strong></h3>
+    <p> To ensure you've understood the task, let's try a few examples! <br>
+    After passing them, you'll be able to do the actual questions that count towards your extra credit. </p>
+      <a href="/examples" class="btn btn-primary">Start with Examples</a>
+
+
     <h3 style="margin-top: 2rem" class="text-muted"><strong>Questions?</strong></h3>
     <p class="text-muted">
       If you have any questions, please reply under the Extra Assignment post on the Ed Discussion forum of your class.
     <div class="col-sm text-center my-auto">
-      <h5 class="text-muted"> Ready to test your ability to detect AI reasoning errors? </p>
-      <a href="/annotate" class="btn btn-primary">Start</a>
     </div>
   </div>
 </div>

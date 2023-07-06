@@ -64,7 +64,13 @@ def _try_create_playlist(name, shortname, version, description, details):
             description=description,
             details=details
         )
-        print("Successful created new Playlist: {} v{}".format(name, version))
+        print(f"Successful created new Playlist:\n \
+              Name: {name}\n \
+              Shortname: {shortname}\n \
+              Version: {version}\n \
+              Description: {description}\n \
+              Details: {details}\n \
+              ")
     return playlist
 
 
@@ -153,8 +159,7 @@ def populate_db(generations_path, version):
         # creating playlist
         playlist = _try_create_playlist(
             name=playlist_json["name"],
-            # TODO(daphne): Add shortnames to input json.
-            shortname=playlist_json["name"],
+            shortname=playlist_json["shortname"],
             version=version,
             description=playlist_json["description"],
             details=playlist_json["details"]
@@ -201,11 +206,11 @@ def populate_db(generations_path, version):
 
                 # Create deocding strategy if it does not already exist.
                 # TODO(daphne): Add support for others besides top-p.
-                if generation["p"] not in P_VALUES_TO_KEEP:
-                    continue
+                # if generation["p"] not in P_VALUES_TO_KEEP:
+                #     continue
 
                 decoding_strategy = _try_create_decoding_strategy(
-                    "top-p", generation["p"])
+                    "top-p", 0.0)
                 try:
                     generation = _try_create_generation(
                         prompt=prompt,

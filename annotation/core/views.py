@@ -12,6 +12,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import ValidationError, validate_password, password_validators_help_text_html
 from markdown2 import markdown
+from pprint import pprint
 
 from core.models import Prompt, Generation, Annotation, Playlist, Profile, SEP, FeedbackOption, Timestamp
 
@@ -339,6 +340,53 @@ def annotate(request):
         "global_reasons": global_reasons,
         "other_reasons": other_reasons,
 
+    })
+
+
+def examples(request):
+    if not request.user.is_authenticated:
+        return redirect('/login')
+
+    # Mark only examples in the examples playlist as available.
+    playlist = Playlist.objects.filter(shortname="mwp(examples)", version="1.0.0") # TODO: support other domains
+    # get playlist_id from the playlist object
+    playlist_id = playlist[0].id
+    # get all generations in the playlist
+    generations = playlist[0].generations.all()
+    print("Annotating examples playlist.")
+
+    # # If the available set is empty, then instead choose from all the examples in the
+    # # unseen set.
+    if not generations or not generations.exists():
+        raise ValueError('no available examples!')
+
+    generation = generations[0] # TODO: check how the iteration works
+
+    prompt_sentences = str_to_list(generation.prompt.body)
+    generated_sentences = str_to_list(generation.body)
+    continuation_sentences = prompt_sentences[1:] + generated_sentences
+
+    # For some datasets, most importntly recipes, the first sentence of the prompt might
+    # have new lines in it which are critical to understanding.
+    prompt_sentences[0] = prompt_sentences[0].replace("\n", "<br/>")
+
+    local_reasons = FeedbackOption.objects.filter(is_default=True, category="local")
+    global_reasons = FeedbackOption.objects.filter(is_default=True, category="global")
+    other_reasons = FeedbackOption.objects.filter(is_default=True, category="other")
+
+    return render(request, "examples.html", {
+        'profile': Profile.objects.get(user=request.user),
+        "prompt": prompt_sentences[0],
+        "text_id": generation.pk,
+        "sentences": json.dumps(continuation_sentences[:9]),
+        "name": request.user.username,
+        "max_sentences": len(continuation_sentences[:9]),
+        "boundary": generation.boundary,
+        "annotation": -1,
+        "playlist": playlist_id,
+        "local_reasons": local_reasons,
+        "global_reasons": global_reasons,
+        "other_reasons": other_reasons
     })
 
 

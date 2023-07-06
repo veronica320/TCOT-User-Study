@@ -1,8 +1,16 @@
 [
     {
         "name": "Math Word Problems",
+        "shortname": "mwp",
         "description": "Can a language model solve a math word problem?",
         "details": "GSM8k dataset",
         "locations": ["generations/code002_COT.json"]
-    }
+    },
+    {
+        "name": "Math Word Problems (Examples)",
+        "shortname": "mwp(examples)",
+        "description": "Can a language model solve a math word problem?",
+        "details": "GSM8k dataset (Examples)",
+        "locations": ["generations/mwp_examples.json"]
+    },
 ]
