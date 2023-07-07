@@ -6,11 +6,16 @@ Interactive examples for tutorial purpose.
 
 {% block content %}
 <script>
+  // global variables
   const all_sentences = {{ sentences|safe }};
   const max_sentences = {{max_sentences}};
   const text_id = "{{ text_id }}";
   const name = "{{ name }}";
   const playlist = "{{ playlist }}";
+  const error_step_index = {{ error_step_index }};
+  const error_category = "{{ error_category }}";
+  const critique = "{{ critique }}";
+  const edit = "{{ edit }}";
 
   // stores list of UNIX timestamps on button presses
   let timestamps = [Date.now()];
@@ -267,44 +272,73 @@ Interactive examples for tutorial purpose.
       }
     }
 
-    // adding new sentence
+    // user thinks current step is correct
     $("#next").click(function() {
-      // $("#false-correct-step").show();
-      current_sentence += 1;
+      // compare the user annotation with gold error_step_index
+      // to see if the current step is actually correct
 
-      if (current_sentence <= max_sentences) {
-        redraw_sentences(current_sentence);
+      if (current_sentence < error_step_index) { // current step is before the actual incorrect step, user judgement is correct
+        // show the next step if we're not at the last step
+        $("#false-incorrect-step").hide();
+        current_sentence += 1;
+        if (current_sentence <= max_sentences) {
+          redraw_sentences(current_sentence);
 
-        // show the previous step button if we're not at the first step
-        if (current_sentence > 1) {
-          $("#prev_step").show();
+          // show the previous step button if we're not at the first step
+          if (current_sentence > 1) {
+            $("#prev_step").show();
+          }
+
+          if (current_sentence == max_sentences) {
+            $("#next").hide();
+            $("#incorrect_step").hide();
+            $("#all_correct").show();
+            $("#global_issue").show();
+          }
         }
-
-        if (current_sentence == max_sentences) {
-          $("#next").hide();
-          $("#incorrect_step").hide();
-          $("#all_correct").show();
-          $("#global_issue").show();
-        }
+      }
+      else if (current_sentence == error_step_index) { // current step is the actual incorrect step
+        $("#false-correct-step").show();
+      }
+      else { // current step after the incorrect step
+        // this shouldn't happen, throw an error
+        console.log("Error: current step is after the incorrect step");
       }
       timestamps.push(Date.now());
     });
 
+     // user thinks current step is incorrect
     $("#incorrect_step").click(function() {
-      // $("#false-incorrect-step").show();
-      // $("#selection").hide();
-      // $("#analysis").show();
-      // $("#revision-form").show();
-      // hide the global reasons
-      // $("#global_reasons").hide();
-      // show the local reasons
-      // $("#local_reasons").show();
-      // $("#edit_instruction").html("Please rewrite the step to be correct.");
+      // compare the user annotation with gold error_step_index
+      // to see if the current step is actually incorrect
+
+
+      if (current_sentence == error_step_index) { // current step is the actual incorrect step, user judgement is correct
+        $("#false-correct-step").hide();
+        $("#selection").hide();
+        $("#analysis").show();
+        $("#success").show();
+        $("#revision-form").show();
+        // hide the global reasons
+        $("#global_reasons").hide();
+        // show the local reasons
+        $("#local_reasons").show();
+        $("#edit_instruction").html("Please rewrite the step to be correct.");
+      }
+      else if (current_sentence < error_step_index) { // current step is before the actual incorrect step
+        $("#false-incorrect-step").show();
+      }
+      else { // current step is after the actual incorrect step
+        // this shouldn't happen, throw an error
+        console.log("Error: current step is after the incorrect step");
+      }
+
       timestamps.push(Date.now());
     });
 
     // go back to the previous step
     $("#prev_step").click(function() {
+      $("#false-correct-step").hide();
       current_sentence -= 1;
       redraw_sentences(current_sentence);
       $("#selection").show();
@@ -374,7 +408,7 @@ Interactive examples for tutorial purpose.
 <div class="row">
   <div class="col-md">
   <div class="col-md" style="padding: 2rem">
-    <h2 class="text-muted"> <strong>Tutorial: Is the reasoning chain correct?</strong> </h2>
+    <h2 class="text-muted"> <strong>Is the reasoning chain correct?</strong> </h2>
     <p class="text-muted" style="margin-bottom: 1rem;">
       You'll see a math question and a model-generated reasoning chain, one step at a time. Your task is to decide at which step (if at all) the reasoning becomes incorrect. Please click the blue button <strong> as soon as</strong> you spot an incorrect step.
 
@@ -382,6 +416,8 @@ Interactive examples for tutorial purpose.
     </p>
 
     <br />
+    <h3 class="text-muted"> <strong>Tutorial</strong> </h3>
+
     <small class="text-muted">Question:</small>
 
     <p class="alert alert-info">
@@ -417,7 +453,7 @@ Interactive examples for tutorial purpose.
           There is nothing wrong with the current step. Try again?
         </p>
         <p class="text-danger" id="false-correct-step" style="display: none">
-          There is actually something wrong with the current step. Go back and think again?
+          There is actually something wrong with the current step. Think again?
         </p>
 
         <a class="btn btn-primary" id="another" style="display: none; color: white">Annotate another.</a>
@@ -426,6 +462,11 @@ Interactive examples for tutorial purpose.
       <div class="card-body" id="analysis" style="display: none">
 
         <form id="revision-form">
+
+        <p class="text-danger" id="success" style="display: none">
+          Congrats! You have successfully identified the erroronerous step. <br>
+          Now, can you provide a critique, an edit, and an error categorization?
+        </p>
 
         <p class="text-info" id="critique_instruction">
           Please briefly explain what's wrong, and suggest a fix in Natural Language.

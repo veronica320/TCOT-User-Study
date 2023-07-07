@@ -341,6 +341,10 @@ def examples(request):
         raise ValueError('no available examples!')
 
     generation = generations[0] # TODO: check how the iteration works
+    error_step_index = generation.error_step_index
+    error_category = generation.error_category
+    critique = generation.critique
+    edit = generation.edit
 
     prompt_sentences = str_to_list(generation.prompt.body)
     generated_sentences = str_to_list(generation.body)
@@ -365,7 +369,11 @@ def examples(request):
         "playlist": playlist_id,
         "local_reasons": local_reasons,
         "global_reasons": global_reasons,
-        "other_reasons": other_reasons
+        "other_reasons": other_reasons,
+        "error_step_index": error_step_index,
+        "error_category": error_category,
+        "critique": critique,
+        "edit": edit,
     })
 
 

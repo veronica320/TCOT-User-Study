@@ -117,7 +117,7 @@ def _try_create_decoding_strategy(name, value):
     return ds
 
 
-def _try_create_generation(gen_text, system, prompt, decoding_strategy):
+def _try_create_generation(gen_text, system, prompt, decoding_strategy, error_step_index, error_category, critique, edit):
     gen = Generation.objects.filter(
         system=system, prompt=prompt, decoding_strategy=decoding_strategy)
     gen = gen[0] if gen else None
@@ -126,7 +126,12 @@ def _try_create_generation(gen_text, system, prompt, decoding_strategy):
             body=gen_text,
             system=system,
             prompt=prompt,
-            decoding_strategy=decoding_strategy)
+            decoding_strategy=decoding_strategy,
+            error_step_index = error_step_index,
+            error_category = error_category,
+            critique = critique,
+            edit = edit
+        )
     return gen
 
 
@@ -169,7 +174,7 @@ def populate_db(generations_path, version):
         for generation_fn in playlist_json["locations"]:
             print("Reading in generations from", generation_fn)
             if generation_fn.startswith("http"):
-                with urllib.request.urlopen(generation_url) as f:
+                with urllib.request.urlopen(generation_fn) as f:
                     generations_json = _read_json(f)
             else:
                 with open(generation_fn) as f:
@@ -216,7 +221,12 @@ def populate_db(generations_path, version):
                         prompt=prompt,
                         system=system,
                         decoding_strategy=decoding_strategy,
-                        gen_text=SEP.join(generation["generation"]))
+                        gen_text=SEP.join(generation["generation"]),
+                        error_step_index=generation["error_step_index"] if "error_step_index" in generation else None,
+                        error_category=generation["error_category"] if "error_category" in generation else None,
+                        critique=generation["critique"] if "critique" in generation else None,
+                        edit=generation["edit"] if "edit" in generation else None
+                        )
                     playlist.generations.add(generation)
                     gen_count += 1
                     if gen_count % 100 == 0:

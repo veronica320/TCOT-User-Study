@@ -19,9 +19,9 @@
         "7. The answer is 120.",
         "Answer: 120"
       ],
-      "error_step_index": 5,
+      "error_step_index": 6,
       "error_category": "missing_step",
-      "critique": "The total time to download the file hasn't included the initial time to download the first 40% of the file, which should be computed before this step.",
+      "critique": "The total time to download the file has not included the initial time to download the first 40% of the file, which should be computed before this step.",
       "edit": "6. She has already spent 40% * 100 = 40 minutes to download the first 40% of the file.",
       "prompt-index": 0
     }
