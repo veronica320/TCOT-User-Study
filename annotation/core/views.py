@@ -87,19 +87,9 @@ def _build_counts_dict(user, playlist_name=None, attention_check=False):
         attention_check=attention_check,
     )
 
-    # Calculate the average distance from boundary from the annotations
-    dist_from_boundary = user_annotations.annotate(
-        distance=((F('boundary') + 1 - F('generation__prompt__num_sentences'))))
-
     # Fill in the dictionary with the appropriate values
     counts = defaultdict(int)
-    counts['points'] = user_annotations.aggregate(Sum('points'))['points__sum']
     counts['total'] = len(user_annotations)
-    counts['correct'] = len(user_annotations.filter(
-        boundary=F('generation__prompt__num_sentences') - 1))
-    counts['past_boundary'] = len(user_annotations.filter(
-        boundary__gte=F('generation__prompt__num_sentences')))
-    counts['avg_distance'] = dist_from_boundary.aggregate(Avg('distance'))['distance__avg']
 
     return counts
 
@@ -221,8 +211,6 @@ def profile(request, username):
         trophies.append({'emoji': '🤖', 'description': 'Complete one annotation.'})
     if counts['general']['points'] and counts['general']['points'] > 50:
         trophies.append({'emoji': '✨', 'description': 'Acheive 50 points.'})
-    if counts['general']['correct'] and counts['general']['correct'] > 0:
-        trophies.append({'emoji': '🔎', 'description': 'Correctly identify one boundary.'})
 
     return render(request, 'profile.html', {
         'profile': Profile.objects.get(user=request.user),
@@ -278,7 +266,7 @@ def annotate(request):
                 generation=qid).exists():
             print('User has already annotated example with qid = {}'.format(qid))
             annotation = Annotation.objects.filter(
-                annotator=request.user, generation_id=qid)[0].boundary
+                annotator=request.user, generation_id=qid)[0].error_step_index_annotated
     else:
         # TODO(daphne): We do eventually need logic here to handle when all annotations
         # for a playlist have been completed. This code will still fail in this
@@ -301,17 +289,11 @@ def annotate(request):
 
     # The percentage of all-human examples that will be converted to attention
     # checks for turkers
-    ATTENTION_CHECK_RATE = 0.5
+    # ATTENTION_CHECK_RATE = 0.5
 
     # Check attention if the user is from Mechanical Turk
+    # TODO: attention check
     attention_check = False
-    if (
-        is_turker
-        and generation.boundary == len(generated_sentences)
-        and random.random() < ATTENTION_CHECK_RATE
-    ):
-        prompt.body += " Please choose 'It's all human-written so far.' for every sentence in this example."
-        attention_check = True
 
     print("Here with generation_id = {}".format(generation.pk))
 
@@ -325,14 +307,12 @@ def annotate(request):
 
 
     return render(request, "annotate.html", {
-        # "remaining": remaining,
         'profile': Profile.objects.get(user=request.user),
         "prompt": prompt_sentences[0],
         "text_id": generation.pk,
         "sentences": json.dumps(continuation_sentences[:9]),
         "name": request.user.username,
         "max_sentences": len(continuation_sentences[:9]),
-        "boundary": generation.boundary,
         "annotation": annotation,# Previous annotation given by user, else -1.
         "attention_check": int(attention_check),
         "playlist": playlist_id,
@@ -381,7 +361,6 @@ def examples(request):
         "sentences": json.dumps(continuation_sentences[:9]),
         "name": request.user.username,
         "max_sentences": len(continuation_sentences[:9]),
-        "boundary": generation.boundary,
         "annotation": -1,
         "playlist": playlist_id,
         "local_reasons": local_reasons,
@@ -397,14 +376,14 @@ def save(request):
     playlist_id = request.POST['playlist_id']
     print("Playlist id in save: ", playlist_id)
 
-    boundary = int(request.POST['boundary'])
+    error_step_index_annotated = int(request.POST['error_step_index_annotated'])
     attention_check = request.POST['attention_check']
 
     annotation = Annotation.objects.create(
         annotator=request.user,
         generation=Generation.objects.get(pk=text),
         playlist=playlist_id,
-        boundary=boundary,
+        error_step_index_annotated=error_step_index_annotated,
         attention_check=attention_check
     )
 

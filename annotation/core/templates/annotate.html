@@ -22,7 +22,6 @@ research. So, please, be nice to the codebase. Thank you!
 {% block content %}
 <script>
   const all_sentences = {{ sentences|safe }};
-  const boundary = {{boundary}};
   const max_sentences = {{max_sentences}};
   const text_id = "{{ text_id }}";
   const attention_check = {{attention_check}};
@@ -141,13 +140,14 @@ research. So, please, be nice to the codebase. Thank you!
       const current_sentence_index = current_sentence - 1;
 
       // make ajax request to log annotation
-      console.log('Making ajax call with boundary = ' + current_sentence_index);
+      console.log('Making ajax call with all_correct = true');
       const url = '{% url "save" %}';
       $.ajax({
         type: 'POST',
         url: url,
         data: {
-          "boundary": current_sentence_index,
+          "all_correct": true,
+          "error_step_index_annotated": null,
           "text": text_id,
           "name": name,
           "playlist_id": playlist,
@@ -241,13 +241,14 @@ research. So, please, be nice to the codebase. Thank you!
 
       // make ajax request to log annotation
       if (all_fields_passed) {
-        console.log('Making ajax call with boundary = ' + current_sentence_index);
+        console.log('Making ajax call with error_step_index_annotated = ' + current_sentence_index);
         const url = '{% url "save" %}';
         $.ajax({
           type: 'POST',
           url: url,
           data: {
-            "boundary": current_sentence_index,
+            "all_correct": false,
+            "error_step_index_annotated": current_sentence_index,
             "text": text_id,
             "name": name,
             "playlist_id": playlist,

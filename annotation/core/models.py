@@ -65,11 +65,11 @@ class Generation(models.Model):
     decoding_strategy = models.ForeignKey(
         DecodingStrategy, on_delete=models.DO_NOTHING)
     body = models.TextField()
-
-    @property
-    def boundary(self):
-        # TODO(daphne): Should there be a +1 here?
-        return self.prompt.num_sentences - 1
+    # optional fields
+    error_step_index = models.IntegerField(null=True)
+    error_category = models.CharField(max_length=128, null=True)
+    critique = models.TextField(null=True)
+    edit = models.TextField(null=True)
 
     def __str__(self):
         return self.body
@@ -93,10 +93,10 @@ class Annotation(models.Model):
     annotator = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     generation = models.ForeignKey(Generation, on_delete=models.DO_NOTHING)
     playlist = models.CharField(max_length=30, default='')
-    boundary = models.IntegerField()
-    # points = models.IntegerField()
     reason = models.ManyToManyField(FeedbackOption)
     attention_check = models.BooleanField(default=False)
+    all_correct = models.BooleanField(null=True, default=None)
+    error_step_index_annotated = models.IntegerField(null=True, default=None)
 
     def __str__(self):
         return self.annotator.username + " " + str(self.date)

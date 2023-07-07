@@ -7,7 +7,6 @@ Interactive examples for tutorial purpose.
 {% block content %}
 <script>
   const all_sentences = {{ sentences|safe }};
-  const boundary = {{boundary}};
   const max_sentences = {{max_sentences}};
   const text_id = "{{ text_id }}";
   const name = "{{ name }}";
@@ -127,13 +126,14 @@ Interactive examples for tutorial purpose.
       const current_sentence_index = current_sentence - 1;
 
       // make ajax request to log annotation
-      console.log('Making ajax call with boundary = ' + current_sentence_index);
+      console.log('Making ajax call with all_correct = true');
       const url = '{% url "save" %}';
       $.ajax({
         type: 'POST',
         url: url,
         data: {
-          "boundary": current_sentence_index,
+          "all_correct": true,
+          "error_step_index_annotated": null,
           "text": text_id,
           "name": name,
           "playlist_id": playlist,
@@ -226,13 +226,14 @@ Interactive examples for tutorial purpose.
 
       // make ajax request to log annotation
       if (all_fields_passed) {
-        console.log('Making ajax call with boundary = ' + current_sentence_index);
+        console.log('Making ajax call with error_step_index_annotated = ' + current_sentence_index);
         const url = '{% url "save" %}';
         $.ajax({
           type: 'POST',
           url: url,
           data: {
-            "boundary": current_sentence_index,
+            "all_correct": false,
+            "error_step_index_annotated": current_sentence_index,
             "text": text_id,
             "name": name,
             "playlist_id": playlist,
@@ -268,6 +269,7 @@ Interactive examples for tutorial purpose.
 
     // adding new sentence
     $("#next").click(function() {
+      // $("#false-correct-step").show();
       current_sentence += 1;
 
       if (current_sentence <= max_sentences) {
@@ -289,14 +291,15 @@ Interactive examples for tutorial purpose.
     });
 
     $("#incorrect_step").click(function() {
-      $("#selection").hide();
-      $("#analysis").show();
-      $("#revision-form").show();
+      // $("#false-incorrect-step").show();
+      // $("#selection").hide();
+      // $("#analysis").show();
+      // $("#revision-form").show();
       // hide the global reasons
-      $("#global_reasons").hide();
+      // $("#global_reasons").hide();
       // show the local reasons
-      $("#local_reasons").show();
-      $("#edit_instruction").html("Please rewrite the step to be correct.");
+      // $("#local_reasons").show();
+      // $("#edit_instruction").html("Please rewrite the step to be correct.");
       timestamps.push(Date.now());
     });
 
@@ -371,7 +374,7 @@ Interactive examples for tutorial purpose.
 <div class="row">
   <div class="col-md">
   <div class="col-md" style="padding: 2rem">
-    <h2 class="text-muted"> <strong>Is the reasoning chain correct?</strong> </h2>
+    <h2 class="text-muted"> <strong>Tutorial: Is the reasoning chain correct?</strong> </h2>
     <p class="text-muted" style="margin-bottom: 1rem;">
       You'll see a math question and a model-generated reasoning chain, one step at a time. Your task is to decide at which step (if at all) the reasoning becomes incorrect. Please click the blue button <strong> as soon as</strong> you spot an incorrect step.
 
@@ -410,6 +413,12 @@ Interactive examples for tutorial purpose.
           There is a global issue.
         </button>
         <button type="button" id="prev_step" class="btn btn-secondary"> Go Back </button>
+        <p class="text-danger" id="false-incorrect-step" style="display: none">
+          There is nothing wrong with the current step. Try again?
+        </p>
+        <p class="text-danger" id="false-correct-step" style="display: none">
+          There is actually something wrong with the current step. Go back and think again?
+        </p>
 
         <a class="btn btn-primary" id="another" style="display: none; color: white">Annotate another.</a>
       </div>
