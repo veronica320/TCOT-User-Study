@@ -67,7 +67,7 @@ class Generation(models.Model):
     body = models.TextField()
     # optional fields
     error_step_index = models.IntegerField(null=True)
-    error_category = models.CharField(max_length=128, null=True)
+    error_category = models.TextField(null=True)
     critique = models.TextField(null=True)
     edit = models.TextField(null=True)
 
@@ -77,7 +77,7 @@ class Generation(models.Model):
 
 class FeedbackOption(models.Model):
     """The types of reasons people give for thinking sentence is machine generated text"""
-    shortname = models.CharField(max_length=40, primary_key=True)
+    shortname = models.TextField(primary_key=True)
     fullname = models.CharField(max_length=250, default="")
     description = models.CharField(max_length=250)
     category = models.CharField(max_length=20)
@@ -94,7 +94,7 @@ class Annotation(models.Model):
     generation = models.ForeignKey(Generation, on_delete=models.DO_NOTHING)
     playlist = models.CharField(max_length=30, default='')
     reason = models.ManyToManyField(FeedbackOption)
-    attention_check = models.BooleanField(default=False)
+    attention_check = models.BooleanField(null=True, default=False)
     all_correct = models.BooleanField(null=True, default=None)
     error_step_index_annotated = models.IntegerField(null=True, default=None)
 

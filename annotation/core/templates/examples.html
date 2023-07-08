@@ -59,9 +59,10 @@ Interactive examples for tutorial purpose.
     $('#' + current_sentence_index.toString()).addClass('bg-info');
     $('#' + current_sentence_index.toString()).css('color', 'white');
 
-    $("#result-text").html(`Your response has been submitted.`)
+    // $("#result-text").html(`Your response has been submitted.`)
 
     $("#analysis").hide();
+    $("#analysis_gold").show();
     $("#continue").show();
 
     const marker = document.querySelector("#marker-after");
@@ -124,7 +125,8 @@ Interactive examples for tutorial purpose.
       const edit = $("#edit").val();
 
       $("#note").val('');
-      $('input[type=checkbox]').each(function() { // select all checkbox input elements on the page
+      // select all checkbox input elements whose id does NOT end with "_gold"
+      $('input[type=checkbox').not('[id*="gold"]').each(function() { 
         this.checked = false; // uncheck all checkboxes
       });
 
@@ -195,8 +197,8 @@ Interactive examples for tutorial purpose.
                                       || logic_error || unit_error || wrong_computation || syntax_error
                                       || wrong_approach || wrong_final_target || problematic_question || other_issue;
       $("#note").val('');
-      $('input[type=checkbox]').each(function() {
-        this.checked = false;
+      $('input[type=checkbox').not('[id*="gold"]').each(function() { 
+        this.checked = false; // uncheck all checkboxes
       });
 
       // get the critique and edit
@@ -408,15 +410,15 @@ Interactive examples for tutorial purpose.
 <div class="row">
   <div class="col-md">
   <div class="col-md" style="padding: 2rem">
-    <h2 class="text-muted"> <strong>Is the reasoning chain correct?</strong> </h2>
+    <h2 class="text-muted"> <strong>Tutorial: Is the reasoning chain correct?</strong> </h2>
     <p class="text-muted" style="margin-bottom: 1rem;">
       You'll see a math question and a model-generated reasoning chain, one step at a time. Your task is to decide at which step (if at all) the reasoning becomes incorrect. Please click the blue button <strong> as soon as</strong> you spot an incorrect step.
-
-      <!--The boundaries are not uniformly or normally distributed, so treat every single instance in isolation.-->
+    </p>
+    <p class="text-muted" style="margin-bottom: 1rem;">
+      This is a <font color="red"> tutorial </font> consisting of <strong>3 example questions</strong>. You'll be able to proceed to the actual task after you pass all of them!
     </p>
 
     <br />
-    <h3 class="text-muted"> <strong>Tutorial</strong> </h3>
 
     <small class="text-muted">Question:</small>
 
@@ -449,10 +451,10 @@ Interactive examples for tutorial purpose.
           There is a global issue.
         </button>
         <button type="button" id="prev_step" class="btn btn-secondary"> Go Back </button>
-        <p class="text-danger" id="false-incorrect-step" style="display: none">
+        <p class="text-danger" id="false-incorrect-step" style="display: none; margin-top: 1rem">
           There is nothing wrong with the current step. Try again?
         </p>
-        <p class="text-danger" id="false-correct-step" style="display: none">
+        <p class="text-danger" id="false-correct-step" style="display: none; margin-top: 1rem">
           There is actually something wrong with the current step. Think again?
         </p>
 
@@ -472,7 +474,7 @@ Interactive examples for tutorial purpose.
           Please briefly explain what's wrong, and suggest a fix in Natural Language.
         </p>
         <div>
-          <input type="text" id="critique" name="critique" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your critique" />
+          <textarea rows="2" id="critique" name="critique" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your critique"></textarea>
         </div>
         <p class="text-danger" id="no-critique" style="display: none">
           Please provide a non-empty critique.
@@ -483,7 +485,7 @@ Interactive examples for tutorial purpose.
           Please rewrite this step to be correct.
         </p>
         <div>
-          <input type="text" id="edit" name="edit" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your edit" />
+          <textarea rows="2" id="edit" name="edit" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="Your edit"></textarea>
         </div>
         <p class="text-danger" id="no-edit" style="display: none">
           Please provide a non-empty edit.
@@ -527,7 +529,7 @@ Interactive examples for tutorial purpose.
               </div>
             {% endfor %}
 
-          </div>
+        </div>
 
           <p class="text-danger" id="no-selection" style="display: none">
             Please select at least one category.
@@ -536,6 +538,50 @@ Interactive examples for tutorial purpose.
             <button type="button" id="go_back" class="btn btn-secondary"> Go Back </button>
         </form>
       </div>
+
+      <div class="card-body" id="analysis_gold" style="display: none">
+
+        <form id="revision-form_gold">
+        <p class="text-danger" id="success">
+          Good job! Your response has been submitted. <br>
+          Compare your response with the reference below:
+        </p>
+
+        <p class="text-info">
+          Reference critique:
+        </p>
+        <div>
+          <textarea rows="2" id="critique_gold" name="critique_gold" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="{{critique}}" readonly="readonly"></textarea>
+        </div>
+
+        <p class="text-info">
+          Reference edit:
+        </p>
+        <div>
+          <textarea rows="2" id="edit_gold" name="edit_gold" style="margin-bottom: 1rem; margin-top: .4rem" class="form-control" placeholder="{{edit}}" readonly="readonly" ></textarea>
+        </div>
+
+        <p class="text-info">
+          Reference category(s):
+        </p>
+        <div>
+          <div id="local_reasons_gold">
+            <div class="text-dark">Local Errors: </div>
+            {% for reason in local_reasons %}
+              <div class="form-check">
+              {% if reason.shortname == error_category %}
+                <input class="form-check-input" type="checkbox" id="{{reason.shortname}}_gold" value="{{reason.shortname}} error" checked disabled>
+                <label class="form-check-label text-muted" for="{{reason.shortname}}" style="font-size: .95rem;">
+                  <strong>{{reason.fullname}}</strong>: <span style="font-size: .85rem;">{{reason.description}}</span>
+                </label>
+              {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        </form>
+      </div>
+
 
       <div class="card-body" id="submit-all-correct" style="display: none">
         <a class="btn btn-primary" style="color: white" id="submit-all-correct-confirmation">Submit</a>

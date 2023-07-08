@@ -342,7 +342,7 @@ def examples(request):
 
     generation = generations[0] # TODO: check how the iteration works
     error_step_index = generation.error_step_index
-    error_category = generation.error_category
+    error_category = generation.error_category # list of error categories
     critique = generation.critique
     edit = generation.edit
 
@@ -385,14 +385,12 @@ def save(request):
     print("Playlist id in save: ", playlist_id)
 
     error_step_index_annotated = int(request.POST['error_step_index_annotated'])
-    attention_check = request.POST['attention_check']
 
     annotation = Annotation.objects.create(
         annotator=request.user,
         generation=Generation.objects.get(pk=text),
         playlist=playlist_id,
         error_step_index_annotated=error_step_index_annotated,
-        attention_check=attention_check
     )
 
     for timestamp in request.POST['timestamps'].split(','):
